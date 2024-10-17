@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import axios from "axios";
 import { LoginInput, RegisterInput } from "../models/authModels";
 
-const API_URL = "http://api"; // Убедитесь, что здесь указан правильный URL
+const API_URL = "http://api";
 
 export interface LoginResponse {
     token: string;

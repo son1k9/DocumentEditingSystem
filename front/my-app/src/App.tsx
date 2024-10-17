@@ -3,34 +3,33 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import About from './pages/About';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import PrivateRoute from './components/PrivateRoute';
-import Dashboard from './pages/Dashboard'; // Не забудьте импортировать Dashboard
-import { AuthProvider } from './context/AuthContext'; // Импортируйте AuthProvider
+import Dashboard from './pages/Dashboard';
+import { AuthProvider } from './context/AuthContext';
 
 import './styles/global.css';
+import MyDocuments from './pages/MyDocuments';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider> {/* Оборачиваем приложение в AuthProvider */}
+    <AuthProvider>
       <Router>
-        <div className="container mx-auto px-4">
+        <div className="flex flex-col min-h-screen">
           <Header />
-          <main>
+          <main className="flex-grow bg-gray-100 flex items-center justify-center">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              
-              {/* Приватный маршрут для Dashboard */}
+              <Route path='/documents' element={<MyDocuments />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route element={<PrivateRoute />}>
-                <Route path="/dashboard" element={<Dashboard />} />
               </Route>
             </Routes>
           </main>
+          {/* Footer */}
           <Footer />
         </div>
       </Router>

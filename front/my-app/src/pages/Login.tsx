@@ -1,26 +1,25 @@
-// src/pages/Login.tsx
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '../context/AuthContext'; // Импортируем хук контекста
-import { useNavigate } from 'react-router-dom';
-import { LoginInput } from '../models/authModels'; // Импортируем интерфейс
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { LoginInput } from '../models/authModels';
 
 const Login: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>();
-  const { login } = useAuth(); // Используем контекст для управления состоянием аутентификации
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      await login(data); // Теперь используем метод login из контекста
-      navigate('/dashboard'); // Перенаправляем на личный кабинет
+      await login(data);
+      navigate('/dashboard');
     } catch (error: any) {
       alert(error.response?.data?.message || 'Ошибка при входе');
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center mb-6">Вход</h1>
 
@@ -58,6 +57,10 @@ const Login: React.FC = () => {
             Войти
           </button>
         </form>
+
+        <p className="mt-4 text-sm text-center text-gray-600">
+          Нет аккаунта? <Link to="/register" className="text-blue-500 hover:underline">Зарегистрируйтесь</Link>
+        </p>
       </div>
     </div>
   );

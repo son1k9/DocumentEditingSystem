@@ -1,13 +1,12 @@
-// src/pages/Register.tsx
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '../context/AuthContext'; // Импортируем хук контекста
-import { useNavigate } from 'react-router-dom';
-import { RegisterInput } from '../models/authModels'; // Импортируем интерфейс
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { RegisterInput } from '../models/authModels';
 
 const Register: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterInput>();
-  const { register: registerUser } = useAuth(); // Используем контекст для управления состоянием аутентификации
+  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
   const onSubmit = async (data: RegisterInput) => {
@@ -21,7 +20,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center mb-6">Регистрация</h1>
 
@@ -59,6 +58,10 @@ const Register: React.FC = () => {
             Зарегистрироваться
           </button>
         </form>
+
+        <p className="mt-4 text-sm text-center text-gray-600">
+          Уже есть аккаунт? <Link to="/login" className="text-blue-500 hover:underline">Войдите</Link>
+        </p>
       </div>
     </div>
   );

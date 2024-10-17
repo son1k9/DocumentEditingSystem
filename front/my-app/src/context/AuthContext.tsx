@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { login as loginService, register as registerService, logout as logoutService, isAuthenticated as checkAuthenticated } from '../services/authService'; // Импортируем сервисы
-import { LoginInput, RegisterInput } from '../models/authModels'; // Импортируем интерфейсы
+import { login as loginService, register as registerService, logout as logoutService, isAuthenticated as checkAuthenticated } from '../services/authService';
+import { LoginInput, RegisterInput } from '../models/authModels'; 
 
 interface AuthContextProps {
   isAuthenticated: boolean;
@@ -15,7 +15,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(checkAuthenticated());
 
   useEffect(() => {
-    // Проверка аутентификации при загрузке
     setIsAuthenticated(checkAuthenticated());
   }, []);
 

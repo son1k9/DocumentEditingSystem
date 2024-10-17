@@ -1,10 +1,10 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Импортируем хук контекста
+import { useAuth } from "../context/AuthContext";
 
 const PrivateRoute: React.FC = () => {
-    const { isAuthenticated } = useAuth(); // Используем контекст для получения состояния аутентификации
-    return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
+  const { isAuthenticated } = useAuth(); 
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
 }
 
 export default PrivateRoute;
