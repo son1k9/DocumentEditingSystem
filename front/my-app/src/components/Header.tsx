@@ -16,6 +16,21 @@ const Header: React.FC = () => {
                             О нас
                         </Link>
                     </li>
+                    <li>
+                        <Link to="/login" className="hover:text-gray-200">
+                            Логин
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/register" className="hover:text-gray-200">
+                            Регистрация
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/dashboard" className="hover:text-gray-200">
+                            Личный кабинет
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </header>
