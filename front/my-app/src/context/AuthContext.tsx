@@ -1,9 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { login as loginService, register as registerService, logout as logoutService, isAuthenticated as checkAuthenticated } from '../services/authService';
+import { login as loginService, register as registerService, logout as logoutService, isAuthenticated as checkAuthenticated, getCurrentUser } from '../services/authService';
 import { LoginInput, RegisterInput } from '../models/authModels'; 
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
 
 interface AuthContextProps {
   isAuthenticated: boolean;
+  user: User | null;
+  error: string | null;
   login: (data: LoginInput) => Promise<void>;
   logout: () => void;
   register: (data: RegisterInput) => Promise<void>;
@@ -13,28 +22,57 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(checkAuthenticated());
+  const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsAuthenticated(checkAuthenticated());
+    const initAuth = async () => {
+      if (checkAuthenticated()) {
+        try {
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
+          setIsAuthenticated(true);
+        } catch (error: any) {
+          setError(error.message);
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      }
+    };
+    initAuth();
   }, []);
 
   const login = async (data: LoginInput) => {
-    await loginService(data);
-    setIsAuthenticated(true);
+    try {
+      const { user } = await loginService(data);
+      setUser(user);
+      setIsAuthenticated(true);
+      setError(null);  // очищаем ошибки при успешном входе
+    } catch (error: any) {
+      setError(error.message);  // установка ошибки при неудаче
+    }
   };
 
   const logout = () => {
     logoutService();
     setIsAuthenticated(false);
+    setUser(null);
+    setError(null);  // очищаем ошибки при логауте
   };
 
   const register = async (data: RegisterInput) => {
-    await registerService(data);
+    try {
+      await registerService(data);
+      setError(null);
+    } catch (error: any) {
+      setError(error.message);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, register }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, error, login, logout, register }}>
       {children}
+      {error && <p className="error-message">{error}</p>} {/* Выводим ошибку, если она есть */}
     </AuthContext.Provider>
   );
 };

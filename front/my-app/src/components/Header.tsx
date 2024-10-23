@@ -25,7 +25,7 @@ const Header: React.FC = () => {
           {isAuthenticated ? (
             <>
               <li>
-                <Link to="/dashboard" className="hover:text-gray-200">
+                <Link to="/account" className="hover:text-gray-200">
                   Личный кабинет
                 </Link>
               </li>
