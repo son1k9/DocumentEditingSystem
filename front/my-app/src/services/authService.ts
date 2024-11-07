@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { LoginInput, RegisterInput } from "../models/authModels";
 
 const API_URL = "http://api";
@@ -17,7 +17,7 @@ export interface LoginResponse {
 export const login = async (data: LoginInput): Promise<LoginResponse> => {
     try {
         /*
-        const response = await axios.post(`${API_URL}/login`, data);
+        const response = await apiClient.post(`${API_URL}/login`, data);
         const { token, user } = response.data;
         Cookies.set('token', token, { expires: 30 });
         return { token, user };
@@ -37,10 +37,9 @@ export const login = async (data: LoginInput): Promise<LoginResponse> => {
     }
 };
 
-
 export const register = async (data: RegisterInput): Promise<void> => {
     try {
-        await axios.post(`${API_URL}/register`, data);
+        await apiClient.post(`${API_URL}/register`, data);
     } catch (error) {
         console.error("Ошибка при регистрации:", error);
         throw new Error("Не удалось зарегистрироваться. Попробуйте позже.");
@@ -62,7 +61,7 @@ export const getCurrentUser = async (): Promise<{ id: number, name: string, emai
         if (!token) {
             throw new Error('Нет токена');
         }
-        const response = await axios.get(`${API_URL}/me`, {
+        const response = await apiClient.get(`${API_URL}/me`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;

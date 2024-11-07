@@ -47,9 +47,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { user } = await loginService(data);
       setUser(user);
       setIsAuthenticated(true);
-      setError(null);  // очищаем ошибки при успешном входе
+      setError(null);
     } catch (error: any) {
-      setError(error.message);  // установка ошибки при неудаче
+      setError(error.message);
     }
   };
 
@@ -57,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logoutService();
     setIsAuthenticated(false);
     setUser(null);
-    setError(null);  // очищаем ошибки при логауте
+    setError(null);
   };
 
   const register = async (data: RegisterInput) => {
@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, error, login, logout, register }}>
       {children}
-      {error && <p className="error-message">{error}</p>} {/* Выводим ошибку, если она есть */}
+      {error && <p className="error-message">{error}</p>}
     </AuthContext.Provider>
   );
 };
