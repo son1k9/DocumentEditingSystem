@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace API.Domain.ValueObjects
 {
-    internal class PhoneNumber
+    public class PhoneNumber
     {
 
         public string Value { get; }
         public static readonly Regex regex = new Regex(
-            @"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
+            @"^\(?([7-8]{1})\)?[-. ]?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
             RegexOptions.Singleline | RegexOptions.Compiled);
 
         public PhoneNumber(string value)

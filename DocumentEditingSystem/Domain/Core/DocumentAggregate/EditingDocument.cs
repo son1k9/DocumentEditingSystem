@@ -2,7 +2,7 @@
 
 namespace API.Domain.Core.DocumentAggregate
 {
-	internal class EditingDocument
+	public class EditingDocument
 	{
 		public int id { get; }
 		public DocumentName DocumentName { get; }

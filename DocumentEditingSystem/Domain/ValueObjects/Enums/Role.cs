@@ -1,6 +1,6 @@
 ﻿namespace API.Domain.ValueObjects.Enums
 {
-    enum Role
+    public enum Role
     {
         User = 1,
         Manager = 2,

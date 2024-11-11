@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace API.Domain.ValueObjects
 {
-    internal class Password
+    public class Password
     {
-        public byte[] Hash { get; private set; }
+        public string Hash { get; private set; }
 
         public Password(string password)
         {
@@ -18,8 +18,9 @@ namespace API.Domain.ValueObjects
                 throw new ArgumentException("Password is invalid");
             }
 
-            HMACSHA512 hmac = new HMACSHA512(Encoding.UTF8.GetBytes("DocumentEditingSystem"));
-            Hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            HMACSHA256 hmac = new HMACSHA256(Encoding.UTF8.GetBytes("DocumentEditingSystem"));
+            byte[] passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            Hash = Convert.ToHexString(passwordHash);
         }
 
         public bool IsValid(string password)
@@ -27,17 +28,16 @@ namespace API.Domain.ValueObjects
             return !string.IsNullOrWhiteSpace(password) && password.Length > 8;
         }
 
-        public bool Compare(string password)
+        public bool Compare(Password password)
         {
-            if (!IsValid(password))
+            if (password == null)
             {
-                throw new ArgumentException("Password is invalid");
+                throw new ArgumentNullException("Password cannot be null");
             }
 
-            HMACSHA512 hmac = new HMACSHA512(Encoding.UTF8.GetBytes("DocumentEditingSystem"));
-            byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-
-            return hash.SequenceEqual(Hash);
+            return Hash == password.Hash;
         }
+
+        private Password() { }
     }
 }

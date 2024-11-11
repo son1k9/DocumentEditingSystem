@@ -3,7 +3,7 @@ using API.Domain.ValueObjects.Enums;
 
 namespace API.Domain.DocumentManagement.DocumentAggregate
 {
-    internal class Document
+    public class Document
 	{
 		public int Id { get;}
 		public DocumentName DocumentName { get; private set; }

@@ -18,7 +18,7 @@ namespace API.Domain.ChangeConfirm.ConfirmAggregate
 			DocumentName = documentName;
 			ChangingDate = changingDate;
 
-			Text = $"Document {DocumentName.Value} was changed by {userName.Value} at {ChangingDate}";
+			Text = $"Document {DocumentName.Value} was changed by {userName.FirstName} {userName.LastName} at {ChangingDate}";
 		}
 	}
 }

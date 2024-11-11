@@ -6,7 +6,5 @@
 		public string ChangingDocument { get; }
 		public string EditorEmail { get; }
 
-		public 
-
 	}
 }

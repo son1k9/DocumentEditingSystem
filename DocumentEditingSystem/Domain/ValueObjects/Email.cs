@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace API.Domain.ValueObjects
 {
-    internal class Email
+    public class Email
     {
         public string Value;
 

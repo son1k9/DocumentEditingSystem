@@ -7,23 +7,30 @@ using System.Threading.Tasks;
 
 namespace API.Domain.ValueObjects
 {
-    internal class Name
+    public class Name
     {
-        public string Value { get; }
+        public string FirstName { get; }
+		public string LastName { get; }
 
-        private static readonly Regex ValidationRegex = new Regex(
-            @"^[\p{L}\p{M}\p{N}]{1,120}\z",
+		private static readonly Regex ValidationRegex = new Regex(
+            @"^[\p{L}\p{M}]{1,120}\z",
             RegexOptions.Singleline | RegexOptions.Compiled);
 
-        public Name(string value)
+        public Name(string firstName, string lastName)
         {
-            if (!IsValid(value))
+            if (!IsValid(firstName))
             {
-                throw new ArgumentException("Name is not valid");
+                throw new ArgumentException("First name is not valid");
             }
 
-            Value = value;
-        }
+			if (!IsValid(lastName))
+			{
+				throw new ArgumentException("Last name is not valid");
+			}
+
+			FirstName = firstName;
+			LastName = lastName;
+		}
 
         public static bool IsValid(string value)
         {
