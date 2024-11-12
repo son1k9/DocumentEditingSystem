@@ -1,13 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { login as loginService, register as registerService, logout as logoutService, isAuthenticated as checkAuthenticated, getCurrentUser } from '../services/authService';
+import { login as loginService, register as registerService, logout as logoutService, isAuthenticated as checkAuthenticated, getCurrentUser, LoginResponse } from '../services/authService';
 import { LoginInput, RegisterInput } from '../models/authModels'; 
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-}
+import { User } from '../models/User';
 
 interface AuthContextProps {
   isAuthenticated: boolean;
@@ -44,11 +38,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (data: LoginInput) => {
     try {
-      const { user } = await loginService(data);
-      setUser(user);
+      const { token, refreshToken ,user } = await loginService(data);
+      setUser({token, refreshToken, user});
       setIsAuthenticated(true);
       setError(null);
     } catch (error: any) {
+      throw new DOMException("Ошибка авторизации");
       setError(error.message);
     }
   };
@@ -66,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(null);
     } catch (error: any) {
       setError(error.message);
+      throw new DOMException("Ошибка регистрации");
     }
   };
 

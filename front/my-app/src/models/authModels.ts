@@ -4,6 +4,11 @@ export interface LoginInput{
 }
 
 export interface RegisterInput{
+    id: number;
+    firstname: string;
+    lastname: string;
     username: string;
+    email: string;
     password: string;
+    phoneNumber: string;
 }

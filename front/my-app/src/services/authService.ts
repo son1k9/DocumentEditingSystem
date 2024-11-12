@@ -2,44 +2,50 @@ import Cookies from "js-cookie";
 import apiClient from "./apiClient";
 import { LoginInput, RegisterInput } from "../models/authModels";
 
-const API_URL = "http://api";
-
 export interface LoginResponse {
-    token: string;
+    access_token: string;
+    refreshToken: string;
     user: {
         id: number;
-        name: string;
+        firstname: string;
+        lastname: string;
+        username: string;
         email: string;
-        role: string;
+        password: string;
+        phoneNumber: string;
     };
 }
 
 export const login = async (data: LoginInput): Promise<LoginResponse> => {
     try {
-        /*
-        const response = await apiClient.post(`${API_URL}/login`, data);
-        const { token, user } = response.data;
-        Cookies.set('token', token, { expires: 30 });
-        return { token, user };
-        */
-        const user = {
-            id: 1,
-            name: "Тестовый пользователь",
-            email: "testuser@example.com",
-            role: "admin",
-        };
-        const token = "test-token";
-        Cookies.set('token', token, { expires: 30 });
-        return { token, user };
-    } catch (error) {
-        console.error("Ошибка при логине:", error);
-        throw new Error("Не удалось выполнить вход. Проверьте данные.");
+        const response = await apiClient.get(`/users/authorize?username=${data.username}&password=${data.password}`);
+        const { access_token, refreshToken, username } = response.data;
+
+        Cookies.set('token', access_token.result);
+        Cookies.set('refreshToken', refreshToken);
+
+        const authToken = `Bearer ${access_token.result}`;
+
+        const userResponse = await apiClient.post("/users/userdata", {}, {
+            headers: {Authorization: authToken}
+        });
+
+        const user = userResponse.data;
+
+        Cookies.set("user", JSON.stringify(user));
+
+        return {access_token, refreshToken, user};
+    } 
+    catch (error) 
+    {
+        console.error("Login error:", error);
+        throw new Error("Failed to login. Please check your credentials.");
     }
 };
 
 export const register = async (data: RegisterInput): Promise<void> => {
     try {
-        await apiClient.post(`${API_URL}/register`, data);
+        await apiClient.post(`users/register`, data);
     } catch (error) {
         console.error("Ошибка при регистрации:", error);
         throw new Error("Не удалось зарегистрироваться. Попробуйте позже.");
@@ -48,32 +54,29 @@ export const register = async (data: RegisterInput): Promise<void> => {
 
 export const logout = () => {
     Cookies.remove('token');
+    Cookies.remove('refreshToken');
+    Cookies.remove('user');
 };
 
 export const isAuthenticated = () => {
-    return !!Cookies.get('token');
+    return !!Cookies.get('token') && !!Cookies.get('user');
 };
 
-export const getCurrentUser = async (): Promise<{ id: number, name: string, email: string, role: string }> => {
+export const getCurrentUser = async () => {
     try {
-        /*
-        const token = Cookies.get('token');
-        if (!token) {
-            throw new Error('Нет токена');
+        const user = Cookies.get("user");
+
+        if (user)
+        {
+            return JSON.parse(user);
         }
-        const response = await apiClient.get(`${API_URL}/me`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        return response.data;
-        */
-        return {
-            id: 1,
-            name: "Тестовый пользователь",
-            email: "test@example.com",
-            role: "admin",
-        };
-    } catch (error) {
-        console.error("Ошибка при получении текущего пользователя:", error);
-        throw new Error("Не удалось загрузить данные пользователя.");
+
+        throw new Error("Could not retrieve user data.");
+
+    } 
+    catch (error) 
+    {
+        console.error("Error retrieving user data:", error);
+        throw new Error("Could not retrieve user data.");
     }
 };

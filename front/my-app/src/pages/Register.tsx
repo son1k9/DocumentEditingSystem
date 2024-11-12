@@ -12,7 +12,6 @@ const Register: React.FC = () => {
   const onSubmit = async (data: RegisterInput) => {
     try {
       await registerUser(data);
-      alert('Регистрация прошла успешно!');
       navigate('/login');
     } catch (error: any) {
       alert(error.response?.data?.message || 'Ошибка при регистрации');
@@ -26,6 +25,32 @@ const Register: React.FC = () => {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-4">
+            <label htmlFor="firstname" className="block mb-2 text-sm font-medium text-gray-700">
+              Имя
+            </label>
+            <input
+              type="text"
+              id="firstname"
+              {...register('firstname', { required: 'Это поле обязательно для заполнения' })}
+              className={`w-full p-2 border ${errors.firstname ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:ring-blue-300`}
+            />
+            {errors.firstname && <p className="text-red-500 text-sm">{errors.firstname.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="lastname" className="block mb-2 text-sm font-medium text-gray-700">
+              Фамилия
+            </label>
+            <input
+              type="text"
+              id="lastname"
+              {...register('lastname', { required: 'Это поле обязательно для заполнения' })}
+              className={`w-full p-2 border ${errors.lastname ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:ring-blue-300`}
+            />
+            {errors.lastname && <p className="text-red-500 text-sm">{errors.lastname.message}</p>}
+          </div>
+
+          <div className="mb-4">
             <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-700">
               Имя пользователя
             </label>
@@ -36,6 +61,32 @@ const Register: React.FC = () => {
               className={`w-full p-2 border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:ring-blue-300`}
             />
             {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700">
+              Электронная почта
+            </label>
+            <input
+              type="email"
+              id="email"
+              {...register('email', { required: 'Это поле обязательно для заполнения', pattern: { value: /^[^@]+@[^@]+\.[^@]+$/, message: 'Введите корректный email' } })}
+              className={`w-full p-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:ring-blue-300`}
+            />
+            {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="phoneNumber" className="block mb-2 text-sm font-medium text-gray-700">
+              Номер телефона
+            </label>
+            <input
+              type="text"
+              id="phoneNumber"
+              {...register('phoneNumber', { required: 'Это поле обязательно для заполнения' })}
+              className={`w-full p-2 border ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:ring-blue-300`}
+            />
+            {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>}
           </div>
 
           <div className="mb-4">
@@ -66,5 +117,6 @@ const Register: React.FC = () => {
     </div>
   );
 };
+
 
 export default Register;
