@@ -2,21 +2,6 @@ namespace OperationalTransformation.Test;
 
 public class OperationalTransformationTest
 {
-    private static string ApplyOp(string str, Operation op)
-    {
-        if (op.Type == OperationType.Insert)
-        {
-            return str.Insert(op.Pos, op.Text);
-        }
-
-        if (op.Type == OperationType.Delete)
-        {
-            return str.Remove(op.Pos, op.Text.Length);
-        }
-
-        return str;
-    }
-
     [Fact]
     public void InsertionInsertion_Test()
     {
@@ -32,8 +17,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformInsertInsert(op1, op2, true);
             var op2Transformed = Operation.TransformInsertInsert(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -51,8 +36,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformInsertInsert(op1, op2, true);
             var op2Transformed = Operation.TransformInsertInsert(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -70,8 +55,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformInsertInsert(op1, op2, true);
             var op2Transformed = Operation.TransformInsertInsert(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -93,8 +78,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformInsertDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteInsert(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -112,8 +97,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformInsertDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteInsert(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -131,8 +116,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformInsertDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteInsert(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -154,8 +139,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformDeleteDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteDelete(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -174,8 +159,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformDeleteDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteDelete(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -193,8 +178,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformDeleteDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteDelete(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -214,8 +199,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformDeleteDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteDelete(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -235,8 +220,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformDeleteDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteDelete(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -256,8 +241,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformDeleteDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteDelete(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
@@ -277,8 +262,8 @@ public class OperationalTransformationTest
             var op1Transformed = Operation.TransformDeleteDelete(op1, op2);
             var op2Transformed = Operation.TransformDeleteDelete(op2, op1);
 
-            str = ApplyOp(ApplyOp(str, op1), op2Transformed);
-            str2 = ApplyOp(ApplyOp(str2, op2), op1Transformed);
+            str = str.ApplyOp(op1).ApplyOp(op2Transformed);
+            str2 = str2.ApplyOp(op2).ApplyOp(op1Transformed);
 
             Assert.Equal(str, str2);
             Assert.Equal(result, str);
