@@ -3,7 +3,9 @@ import * as signalR from '@microsoft/signalr';
 import { Document } from '../models/Document';
 import { useAuth } from '../context/AuthContext';
 import { getDocumentsForUser } from '../services/documentService';
+import { Operation, OperationType } from '../models/operation';
 import diff_match_patch from 'diff-match-patch';
+import { transformOperation } from '../utils/transformOperation';
 
 const dmp = new diff_match_patch();
 
@@ -13,14 +15,15 @@ const MyDocuments: React.FC = () => {
   const [activeDocumentId, setActiveDocumentId] = useState<number | null>(null);
   const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
   const [documentContent, setDocumentContent] = useState('');
-  const [lastSentContent, setLastSentContent] = useState<string>(''); 
+  const [lastSentContent, setLastSentContent] = useState<string>('');
+  const [localOperations, setLocalOperations] = useState<Operation[]>([]);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchDocuments = async () => {
       if (user) {
         try {
-          const userDocuments = await getDocumentsForUser(user.id);
+          const userDocuments = await getDocumentsForUser(user.user.id);
           setDocuments(userDocuments);
         } catch (error) {
           console.error('Error fetching documents:', error);
@@ -38,19 +41,40 @@ const MyDocuments: React.FC = () => {
       }
 
       const newConnection = new signalR.HubConnectionBuilder()
-        .withUrl(`/documentHub/${documentId}`)
+        .withUrl(`/documents`)
         .withAutomaticReconnect()
         .build();
 
-      newConnection.on('ReceiveDocumentUpdate', (patchText: string) => {
+      newConnection.on("JoinedDocument", (joinedDocumentId) => {
+        console.log(`Joined document ${joinedDocumentId} group successfully`);
+      });
+
+      newConnection.on('ReceivedOperation', (patchText: string, nextVersion: number) => {
+        const patches = dmp.patch_fromText(patchText);
+      
         setDocumentContent((localContent) => {
-          const patches = dmp.patch_fromText(patchText);
-          const [updatedContent] = dmp.patch_apply(patches, localContent);
+          const [updatedContent, results] = dmp.patch_apply(patches, localContent);
+      
+          const transformedOps = patches.map((patch) => {
+            const operation: Operation = {
+              type: patch[0] > 0 ? OperationType.Insert : OperationType.Delete,
+              pos: patch[1],
+              text: patch[0] > 0 ? patch[1] : '',
+              version: nextVersion,
+              userID: user?.user.id || 0,
+            };
+      
+            return transformOperation(operation, localOperations);
+          });
+      
+          setLocalOperations((prevOps) => [...prevOps, ...transformedOps]);
+      
           return updatedContent;
         });
       });
 
       await newConnection.start();
+      await newConnection.invoke("JoinDocument", documentId);
       setConnection(newConnection);
     };
 
@@ -64,7 +88,7 @@ const MyDocuments: React.FC = () => {
     return () => {
       connection?.stop();
     };
-  }, [activeDocumentId, documents]);
+  }, [activeDocumentId, documents, localOperations]);
 
   const handleDocumentSelect = (documentId: number) => {
     setActiveDocumentId(documentId);
@@ -89,10 +113,28 @@ const MyDocuments: React.FC = () => {
       if (diff.length) {
         const patches = dmp.patch_make(lastSentContent, diff);
         const patchText = dmp.patch_toText(patches);
-
+  
         if (connection) {
           try {
-            await connection.invoke('SendDocumentUpdate', activeDocumentId, patchText);
+            await connection.invoke('SendOperation', { patchText }, activeDocumentId);
+            
+            const localOp: Operation = diff.some(([operationType]) => operationType === -1)
+              ? {
+                  type: OperationType.Delete,
+                  pos: patches[0][1],
+                  text: diff[0][1],
+                  version: lastSentContent.length + 1, 
+                  userID: user?.user.id || 0,
+                }
+              : {
+                  type: OperationType.Insert,
+                  pos: patches[0][1],
+                  text: diff[0][1],
+                  version: lastSentContent.length + 1,
+                  userID: user?.user.id || 0,
+                };
+  
+            setLocalOperations((prevOps) => [...prevOps, localOp]);
             setLastSentContent(newContent);
           } catch (err) {
             console.error('Error sending document update:', err);
@@ -101,6 +143,7 @@ const MyDocuments: React.FC = () => {
       }
     }
   };
+  
 
   const activeDocument = documents.find(doc => doc.id === activeDocumentId);
 
