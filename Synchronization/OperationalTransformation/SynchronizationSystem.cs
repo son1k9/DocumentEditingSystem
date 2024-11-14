@@ -45,4 +45,18 @@ public class SynchronizationSystem
             _lock.ExitWriteLock();
         }
     }
+
+    public void RemoveDocument(string documentID)
+    {
+        _lock.EnterWriteLock();
+        try
+        {
+            documents.Remove(documentID);
+            locks.Remove(documentID);
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
+    }
 }

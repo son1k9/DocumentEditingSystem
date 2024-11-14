@@ -10,8 +10,7 @@ public enum OperationType
     Delete
 }
 
-
-//See https://en.wikipedia.org/wiki/Operational_transformation for explanation
+//See https://en.wikipedia.org/wiki/Operational_transformation for some explanation
 
 public class Operation
 {
