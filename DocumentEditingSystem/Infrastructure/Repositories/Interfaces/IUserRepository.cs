@@ -4,10 +4,10 @@ namespace API.Infrastructure.Repositories.Interfaces
 {
 	public interface IUserRepository
 	{
-		Task<bool> Create(User user);
-		Task<bool> Update(User user);
-		Task<bool> Delete(User user);
-		Task<User> GetById(int id);
-		Task<User> GetByUsername(string username);
+		Task<bool> CreateAsync(User user);
+		Task<bool> UpdateAsync(User user);
+		Task<bool> DeleteAsync(User user);
+		Task<User> GetByIdAsync(int id);
+		Task<User> GetByUsernameAsync(string username);
 	}
 }

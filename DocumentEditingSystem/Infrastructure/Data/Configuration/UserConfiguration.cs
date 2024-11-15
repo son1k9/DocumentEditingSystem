@@ -1,4 +1,5 @@
-﻿using Domain.UserManagement.UserAggregate;
+﻿using API.Domain.DocumentManagement.DocumentAggregate;
+using Domain.UserManagement.UserAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

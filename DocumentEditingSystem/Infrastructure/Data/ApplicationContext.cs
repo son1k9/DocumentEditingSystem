@@ -9,9 +9,9 @@ namespace API.Infrastructure.Data
 {
     public class ApplicationContext : DbContext
     {
-        //public DbSet<Document> Documents { get; set; }
+        public DbSet<Document> Documents { get; set; }
 		public DbSet<User> Users { get; set; }
-		//public DbSet<DocumentManager> DocumentUsers {  get; set; }
+		//public DbSet<DocumentManager> DocumentManagers {  get; set; }
 		//public DbSet<DocumentEditor> DocumentEditors {  get; set; }
 		//public DbSet<EditingDocument> EditingDocuments { get; set; }
 		//public DbSet<DocumentManager> DocumentManagers {  get; set; }
@@ -26,35 +26,10 @@ namespace API.Infrastructure.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.ApplyConfiguration(new UserConfiguration());
+            modelBuilder.ApplyConfiguration(new DocumentConfiguration());
+            //modelBuilder.ApplyConfiguration(new DocumentManagerConfiguration());
 
-   //         modelBuilder.Entity<User>().HasKey(p => p.Id);
-   //         modelBuilder.Entity<User>().OwnsOne(p => p.Name, a =>
-   //         {
-   //             a.Property(u => u.Value).HasColumnName("Name").IsRequired();
-   //             a.Property(u => u.Value).HasColumnType("varchar");
-   //         });
-			//modelBuilder.Entity<User>().OwnsOne(p => p.Email, a =>
-   //         {
-   //             a.Property(u => u.Value).HasColumnName("Email").IsRequired();
-   //         });
-			//modelBuilder.Entity<User>().OwnsOne(p => p.Username, a =>
-   //         {
-   //             a.Property(u => u.Value).HasColumnName("Username")
-   //             .HasColumnType("varchar")
-   //             .IsRequired();
-   //         });
-			//modelBuilder.Entity<User>().OwnsOne(p => p.Password, a =>
-   //         {
-   //             a.Property(u => u.Hash).HasColumnName("PasswordHash");
-   //             a.Property(u => u.Hash).HasColumnType("varchar");
-   //             a.Property(u => u.Hash).IsRequired();
-			//});
-			//modelBuilder.Entity<User>().OwnsOne(p => p.PhoneNumber, a =>
-   //         {
-   //             a.Property(u => u.Value).HasColumnName("PhoneNumber").IsRequired();
-   //         });
-			//modelBuilder.Entity<User>().Property()
-			//modelBuilder.Entity<DocumentManager>().HasOne<User>();
+            //modelBuilder.Entity<User>().
 		}
 
     }

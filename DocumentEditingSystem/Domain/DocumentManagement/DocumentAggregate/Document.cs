@@ -10,20 +10,23 @@ namespace API.Domain.DocumentManagement.DocumentAggregate
 		public string Text { get; private set; }
 		public DateTime CreationDate { get; private set; }
 		public DateTime ChangingDate { get; private set; }
-		public DocumentManager Manager { get; private set; }
+
+		public int OwnerId { get; private set; }
+
+		//public DocumentManager Manager { get; private set; }
 
 		public Document(DocumentName documentName, string text)
 		{
 			if (documentName == null) throw new ArgumentNullException("Document name cannot be null");
 			DocumentName = documentName;
+			Text = text;
 			CreationDate = DateTime.UtcNow;
 			ChangingDate = DateTime.UtcNow;
 		}
 
-		public void SetManager(DocumentManager manager)
+		public void SetOwnerId(int ownerId)
 		{
-			if(manager == null) throw new ArgumentNullException("Manager cannot be null");
-			Manager = manager;
+			OwnerId = ownerId;
 		}
 
 		public void UpdateDocument(string text)
@@ -31,6 +34,8 @@ namespace API.Domain.DocumentManagement.DocumentAggregate
 			Text = text;
 			ChangingDate = DateTime.UtcNow;
 		}
+
+		private Document() { }
 
 		
 	}

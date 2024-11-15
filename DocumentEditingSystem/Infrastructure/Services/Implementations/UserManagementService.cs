@@ -24,12 +24,13 @@ namespace API.Infrastructure.Services.Implementations
             _userRepository = userRepository;
         }
 
-        private string GenerateToken(Username username, Role role)
+        private string GenerateToken(Username username, int userId, Role role)
         {
 			var claims = new List<Claim> {
                 new Claim(ClaimsIdentity.DefaultNameClaimType, username.Value ),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, role.ToString())                         
-            };
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, role.ToString()),
+				new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+			};
 
             ClaimsIdentity claimsIdentity = new ClaimsIdentity
                 (
@@ -52,21 +53,27 @@ namespace API.Infrastructure.Services.Implementations
 
         public async Task<string> Autorize(Username username, Password password)
         {
-            User user = await _userRepository.GetByUsername(username.Value);
+            User user = await _userRepository.GetByUsernameAsync(username.Value);
 			
             if(user == null)
             {
-                throw new ArgumentException("Invalid login");
+                throw new ArgumentException("Invalid login or password!");
             }
 
+            var result = user.Password.Compare(password);
 
-            var jwt = GenerateToken(username, user.Role);
+            if (!result)
+            {
+                throw new ArgumentException("Invalid login or password!");
+            }
+
+            var jwt = GenerateToken(username, user.Id, user.Role);
             return jwt;
 		}
 
         public async Task<UserR> ChangeName(Name name, Username username)
         {
-            User user = await _userRepository.GetByUsername(username.Value);
+            User user = await _userRepository.GetByUsernameAsync(username.Value);
 
             if(user == null)
             {
@@ -75,7 +82,7 @@ namespace API.Infrastructure.Services.Implementations
 
             user.ChangeName(name);
 
-            bool result = await _userRepository.Update(user);
+            bool result = await _userRepository.UpdateAsync(user);
 
             if (!result)
             {
@@ -87,7 +94,7 @@ namespace API.Infrastructure.Services.Implementations
 
         public async Task<UserR> ChangeEmail(Email email, Username username)
         {
-            User user = await _userRepository.GetByUsername(username.Value);
+            User user = await _userRepository.GetByUsernameAsync(username.Value);
 
             if(user == null)
             {
@@ -95,7 +102,7 @@ namespace API.Infrastructure.Services.Implementations
             }
 
             user.ChangeEmail(email);
-            bool result = await _userRepository.Update(user);
+            bool result = await _userRepository.UpdateAsync(user);
             if (!result)
             {
 				throw new Exception("An error occurred updating the data");
@@ -106,7 +113,7 @@ namespace API.Infrastructure.Services.Implementations
 
         public async Task<UserR> ChangePassword(Password newPassword, Password oldPassword, Username username)
         {
-			User user = await _userRepository.GetByUsername(username.Value);
+			User user = await _userRepository.GetByUsernameAsync(username.Value);
 
 			if (user == null)
 			{
@@ -121,7 +128,7 @@ namespace API.Infrastructure.Services.Implementations
             }
 
 			user.ChangePassword(newPassword);
-			bool result = await _userRepository.Update(user);
+			bool result = await _userRepository.UpdateAsync(user);
 
 			if (!result)
 			{
@@ -133,7 +140,7 @@ namespace API.Infrastructure.Services.Implementations
 
         public async Task<UserR> ChangePhoneNumber(PhoneNumber newNumber, Username username)
         {
-			User user = await _userRepository.GetByUsername(username.Value);
+			User user = await _userRepository.GetByUsernameAsync(username.Value);
 
 			if (user == null)
 			{
@@ -141,7 +148,7 @@ namespace API.Infrastructure.Services.Implementations
 			}
 
 			user.ChangePhoneNumber(newNumber);
-			bool result = await _userRepository.Update(user);
+			bool result = await _userRepository.UpdateAsync(user);
 
 			if (!result)
 			{
@@ -153,7 +160,7 @@ namespace API.Infrastructure.Services.Implementations
 
         public async Task<UserR> GetUserData(Username username)
         {
-            User user = await _userRepository.GetByUsername(username.Value);
+            User user = await _userRepository.GetByUsernameAsync(username.Value);
             if (user == null)
             {
                 throw new ArgumentException("The user does not exist");
@@ -166,19 +173,19 @@ namespace API.Infrastructure.Services.Implementations
 		public async Task<string> Register(UserW userW)
 		{
 
-            User user = await _userRepository.GetByUsername(userW.Username);
+            User user = await _userRepository.GetByUsernameAsync(userW.Username);
             if (user != null)
             {
                 throw new ArgumentException("Username is busy");
             }
 
             user = UserMapper.DtoToUser(userW);
-            var result = await _userRepository.Create(user);
+            var result = await _userRepository.CreateAsync(user);
 
             if (result)
             {
 				
-				var jwt = GenerateToken(user.Username, user.Role);
+				var jwt = GenerateToken(user.Username, user.Id, user.Role);
 				return jwt;
 			}
 

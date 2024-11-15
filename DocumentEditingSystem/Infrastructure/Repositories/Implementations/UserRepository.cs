@@ -27,30 +27,30 @@ namespace API.Infrastructure.Repositories.Implementations
 			}
 		}
 
-		public async Task<bool> Create(User user)
+		public async Task<bool> CreateAsync(User user)
 		{
 			await _context.AddAsync(user);
 
 			return await SaveAsync();
 		}
 
-		public async Task<bool> Delete(User user)
+		public async Task<bool> DeleteAsync(User user)
 		{
 			_context.Users.Remove(user);
 			return await SaveAsync();
 		}
 
-		public async Task<User> GetByUsername(string username)
+		public async Task<User> GetByUsernameAsync(string username)
 		{
 			return await _context.Users.FirstOrDefaultAsync(p => p.Username.Value == username);
 		}
 
-		public async Task<User> GetById(int id)
+		public async Task<User> GetByIdAsync(int id)
 		{
 			return await _context.Users.FirstOrDefaultAsync(p => p.Id == id);
 		}
 
-		public async Task<bool> Update(User user)
+		public async Task<bool> UpdateAsync(User user)
 		{
 			_context.Users.Update(user);
 			return await SaveAsync();

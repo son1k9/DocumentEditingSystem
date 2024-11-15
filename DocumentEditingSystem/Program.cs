@@ -53,6 +53,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
+builder.Services.AddScoped<IDocumentManagementRepository, DocumentManagementRepository>();
 
 var app = builder.Build();
 
