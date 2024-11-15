@@ -11,10 +11,8 @@ namespace API.Infrastructure.Data
     {
         public DbSet<Document> Documents { get; set; }
 		public DbSet<User> Users { get; set; }
-		//public DbSet<DocumentManager> DocumentManagers {  get; set; }
 		//public DbSet<DocumentEditor> DocumentEditors {  get; set; }
 		//public DbSet<EditingDocument> EditingDocuments { get; set; }
-		//public DbSet<DocumentManager> DocumentManagers {  get; set; }
 
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
@@ -27,9 +25,8 @@ namespace API.Infrastructure.Data
 
             modelBuilder.ApplyConfiguration(new UserConfiguration());
             modelBuilder.ApplyConfiguration(new DocumentConfiguration());
-            //modelBuilder.ApplyConfiguration(new DocumentManagerConfiguration());
 
-            //modelBuilder.Entity<User>().
+
 		}
 
     }

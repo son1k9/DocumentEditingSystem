@@ -13,8 +13,6 @@ namespace API.Domain.DocumentManagement.DocumentAggregate
 
 		public int OwnerId { get; private set; }
 
-		//public DocumentManager Manager { get; private set; }
-
 		public Document(DocumentName documentName, string text)
 		{
 			if (documentName == null) throw new ArgumentNullException("Document name cannot be null");
