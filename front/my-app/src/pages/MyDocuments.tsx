@@ -2,161 +2,182 @@ import React, { useEffect, useState, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { Document } from '../models/Document';
 import { useAuth } from '../context/AuthContext';
-import { getDocumentsForUser } from '../services/documentService';
-import { Operation, OperationType } from '../models/operation';
-import diff_match_patch from 'diff-match-patch';
-import { transformOperation } from '../utils/transformOperation';
-
-const dmp = new diff_match_patch();
+import { Operation, OperationType } from '../utils/OperationService';
 
 const MyDocuments: React.FC = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<number | null>(null);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
   const [documentContent, setDocumentContent] = useState('');
-  const [lastSentContent, setLastSentContent] = useState<string>('');
-  const [localOperations, setLocalOperations] = useState<Operation[]>([]);
+  const [currentVersion, setCurrentVersion] = useState<number>(0); // Текущая версия
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [operationsQueue, setOperationsQueue] = useState<Operation[]>([]);
+  const activeDocumentIdRef = useRef<string | null>(null);
+
+  const mockDocuments = [
+    {
+      id: 'aefaefs',
+      title: 'Тестовый документ',
+      content: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
 
   useEffect(() => {
-    const fetchDocuments = async () => {
-      if (user) {
-        try {
-          const userDocuments = await getDocumentsForUser(user.user.id);
-          setDocuments(userDocuments);
-        } catch (error) {
-          console.error('Error fetching documents:', error);
-        }
-      }
-    };
-
-    fetchDocuments();
-  }, [user]);
+    setDocuments(mockDocuments);
+  }, []);
 
   useEffect(() => {
-    const connectToHub = async (documentId: number) => {
-      if (connection) {
-        await connection.stop();
-      }
-
+    const initializeConnection = async () => {
       const newConnection = new signalR.HubConnectionBuilder()
-        .withUrl(`/documents`)
+        .withUrl('http://localhost:5019/hubs/documents')
         .withAutomaticReconnect()
         .build();
 
-      newConnection.on("JoinedDocument", (joinedDocumentId) => {
+      newConnection.on('JoinedDocument', (joinedDocumentId) => {
         console.log(`Joined document ${joinedDocumentId} group successfully`);
       });
 
-      newConnection.on('ReceivedOperation', (patchText: string, nextVersion: number) => {
-        const patches = dmp.patch_fromText(patchText);
-      
-        setDocumentContent((localContent) => {
-          const [updatedContent, results] = dmp.patch_apply(patches, localContent);
-      
-          const transformedOps = patches.map((patch) => {
-            const operation: Operation = {
-              type: patch[0] > 0 ? OperationType.Insert : OperationType.Delete,
-              pos: patch[1],
-              text: patch[0] > 0 ? patch[1] : '',
-              version: nextVersion,
-              userID: user?.user.id || 0,
-            };
-      
-            return transformOperation(operation, localOperations);
-          });
-      
-          setLocalOperations((prevOps) => [...prevOps, ...transformedOps]);
-      
-          return updatedContent;
-        });
+      newConnection.on('ReceivedOperation', (operation: Operation, version: number) => {
+        console.log('Received operation:', operation, 'Version:', version);
+        handleReceivedOperation(operation, version);
       });
 
-      await newConnection.start();
-      await newConnection.invoke("JoinDocument", documentId);
-      setConnection(newConnection);
+      newConnection.on('ReceivedAcknowledge', (nextVersion: number) => {
+        console.log('Acknowledged version:', nextVersion);
+        setCurrentVersion(nextVersion);
+      });
+
+      try {
+        await newConnection.start();
+        console.log('Connected to SignalR hub');
+        setConnection(newConnection);
+      } catch (err) {
+        console.error('Error connecting to SignalR hub:', err);
+      }
     };
 
-    if (activeDocumentId !== null) {
-      const selectedDocument = documents.find(doc => doc.id === activeDocumentId);
-      setDocumentContent(selectedDocument?.content || '');
-      setLastSentContent(selectedDocument?.content || '');
-      connectToHub(activeDocumentId);
-    }
+    initializeConnection();
 
     return () => {
       connection?.stop();
     };
-  }, [activeDocumentId, documents, localOperations]);
+  }, []);
 
-  const handleDocumentSelect = (documentId: number) => {
+  useEffect(() => {
+    activeDocumentIdRef.current = activeDocumentId;
+
+    if (connection && activeDocumentId) {
+      const joinDocument = async () => {
+        try {
+          await connection.invoke('JoinDocument', activeDocumentId);
+        } catch (err) {
+          console.error('Error joining document group:', err);
+        }
+      };
+
+      joinDocument();
+    }
+  }, [activeDocumentId, connection]);
+
+  const handleDocumentSelect = (documentId: string) => {
+    const selectedDocument = documents.find((doc) => doc.id === documentId);
     setActiveDocumentId(documentId);
+    setDocumentContent(selectedDocument?.content || '');
+    setCurrentVersion(0); // Сброс версии при переключении документа
+    console.log('Selected document:', documentId, selectedDocument);
   };
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setDocumentContent(newContent);
 
+    const operations = detectOperations(documentContent, newContent);
+    setOperationsQueue((prevOps) => [...prevOps, ...operations]);
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      sendChanges(newContent);
+      sendChanges();
     }, 3000);
   };
 
-  const sendChanges = async (newContent: string) => {
-    if (newContent !== lastSentContent) {
-      const diff = dmp.diff_main(lastSentContent, newContent);
-      if (diff.length) {
-        const patches = dmp.patch_make(lastSentContent, diff);
-        const patchText = dmp.patch_toText(patches);
-  
-        if (connection) {
-          try {
-            await connection.invoke('SendOperation', { patchText }, activeDocumentId);
-            
-            const localOp: Operation = diff.some(([operationType]) => operationType === -1)
-              ? {
-                  type: OperationType.Delete,
-                  pos: patches[0][1],
-                  text: diff[0][1],
-                  version: lastSentContent.length + 1, 
-                  userID: user?.user.id || 0,
-                }
-              : {
-                  type: OperationType.Insert,
-                  pos: patches[0][1],
-                  text: diff[0][1],
-                  version: lastSentContent.length + 1,
-                  userID: user?.user.id || 0,
-                };
-  
-            setLocalOperations((prevOps) => [...prevOps, localOp]);
-            setLastSentContent(newContent);
-          } catch (err) {
-            console.error('Error sending document update:', err);
-          }
+  const detectOperations = (oldContent: string, newContent: string) => {
+    const operations: Operation[] = [];
+    const insertedText = newContent.substring(oldContent.length);
+    if (insertedText) {
+      operations.push(Operation.createInsertOp(oldContent.length, insertedText, currentVersion, user?.user.id || 0));
+    }
+
+    // Обработка операций удаления
+    const deletedText = oldContent.substring(newContent.length);
+    if (deletedText) {
+      operations.push(Operation.createDeleteOp(newContent.length, deletedText, currentVersion, user?.user.id || 0));
+    }
+
+    return operations;
+  };
+
+  const sendChanges = async () => {
+    if (connection && operationsQueue.length > 0 && activeDocumentIdRef.current) {
+      try {
+        const currentQueue = [...operationsQueue];
+        setOperationsQueue([]);
+        for (const operation of currentQueue) {
+          const operationWithVersion = { ...operation, version: currentVersion };
+          console.log('Sending operation with version:', operationWithVersion);
+          await connection.invoke('SendOperation', operationWithVersion);
         }
+      } catch (err) {
+        console.error('Error sending changes:', err);
       }
     }
   };
-  
 
-  const activeDocument = documents.find(doc => doc.id === activeDocumentId);
+  const handleReceivedOperation = (operation: Operation, version: number) => {
+    /*if (version !== currentVersion) {
+      console.warn('Version mismatch:', { localVersion: currentVersion, receivedVersion: version });
+      synchronizeWithServer();
+    } else {*/
+      setDocumentContent((prevContent) => applyOperationToContent(prevContent, operation));
+      setCurrentVersion(version);
+    //}
+  };
+
+  const applyOperationToContent = (content: string, operation: Operation): string => {
+    switch (operation.type) {
+      case OperationType.Insert:
+        return content.slice(0, operation.pos) + operation.text + content.slice(operation.pos);
+      case OperationType.Delete:
+        return content.slice(0, operation.pos) + content.slice(operation.pos + operation.text.length);
+      default:
+        console.error('Unknown operation type:', operation.type);
+        return content;
+    }
+  };
+
+  const synchronizeWithServer = async () => {
+    if (connection && activeDocumentIdRef.current) {
+      try {
+        const updatedDocument = await connection.invoke('GetDocument', activeDocumentIdRef.current);
+        setDocumentContent(updatedDocument.content);
+        setCurrentVersion(updatedDocument.version);
+        setOperationsQueue([]); // Очистить очередь локальных операций
+        console.log('Synchronized with server:', updatedDocument);
+      } catch (err) {
+        console.error('Error synchronizing with server:', err);
+      }
+    }
+  };
 
   return (
     <div className="flex-1 flex overflow-hidden min-h-[calc(100vh-120px)]">
       <div className="flex-1 bg-white p-6 shadow-md flex flex-col">
         <h1 className="text-2xl font-bold mb-4">Редактирование документа</h1>
-        {activeDocument && (
-          <div className="mb-4 text-gray-500 text-sm">
-            <p>Создан: {new Date(activeDocument.createdAt).toLocaleString()}</p>
-            <p>Последнее обновление: {new Date(activeDocument.updatedAt).toLocaleString()}</p>
-          </div>
-        )}
         <div className="border border-gray-300 p-4 flex-1 overflow-auto">
           <textarea
             className="w-full h-full border-0 focus:outline-none resize-none"
@@ -166,24 +187,21 @@ const MyDocuments: React.FC = () => {
           />
         </div>
       </div>
-
       <div className="w-64 bg-gray-100 p-4 border-l border-gray-300 shadow-md flex flex-col">
         <h2 className="text-xl font-bold mb-4">Мои документы</h2>
         <ul className="space-y-2 flex-grow overflow-auto">
-          {documents.map(doc => (
+          {documents.map((doc) => (
             <li
               key={doc.id}
-              className={`p-2 bg-white hover:bg-gray-200 cursor-pointer border rounded ${activeDocumentId === doc.id ? 'bg-gray-200' : ''}`}
+              className={`p-2 bg-white hover:bg-gray-200 cursor-pointer border rounded ${
+                activeDocumentId === doc.id ? 'bg-gray-200' : ''
+              }`}
               onClick={() => handleDocumentSelect(doc.id)}
             >
               {doc.title}
-              <p className="text-xs text-gray-500">Обновлено: {new Date(doc.updatedAt).toLocaleString()}</p>
             </li>
           ))}
         </ul>
-        <button className="mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
-          Создать новый документ
-        </button>
       </div>
     </div>
   );

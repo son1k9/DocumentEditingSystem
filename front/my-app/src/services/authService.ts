@@ -7,8 +7,8 @@ export interface LoginResponse {
     refreshToken: string;
     user: {
         id: number;
-        firstname: string;
-        lastname: string;
+        firstName: string;
+        lastName: string;
         username: string;
         email: string;
         password: string;
@@ -34,7 +34,7 @@ export const login = async (data: LoginInput): Promise<LoginResponse> => {
 
         Cookies.set("user", JSON.stringify(user));
 
-        return {access_token, refreshToken, user};
+        return {access_token: access_token.result, refreshToken, user};
     } 
     catch (error) 
     {
@@ -64,11 +64,19 @@ export const isAuthenticated = () => {
 
 export const getCurrentUser = async () => {
     try {
-        const user = Cookies.get("user");
+        const userj = Cookies.get("user");
+        const token = Cookies.get("token");
+        const refreshToken = Cookies.get("refreshToken");
 
-        if (user)
+        if (userj)
         {
-            return JSON.parse(user);
+            const user = JSON.parse(userj);
+
+            return {
+                token,
+                refreshToken,
+                user
+            }
         }
 
         throw new Error("Could not retrieve user data.");

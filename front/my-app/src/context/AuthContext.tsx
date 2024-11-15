@@ -38,13 +38,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (data: LoginInput) => {
     try {
-      const { token, refreshToken ,user } = await loginService(data);
-      setUser({token, refreshToken, user});
+      await loginService(data);
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
       setIsAuthenticated(true);
       setError(null);
     } catch (error: any) {
-      throw new DOMException("Ошибка авторизации");
       setError(error.message);
+      throw new DOMException("Ошибка авторизации");
     }
   };
 
