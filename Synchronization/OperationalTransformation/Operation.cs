@@ -14,13 +14,15 @@ public enum OperationType
 
 public class Operation
 {
-    public readonly OperationType Type;
-    public readonly int Pos;
-    public readonly string Text;
-    public readonly int UserID;
-    public int Version;
+    public OperationType Type { get; set; }
+    public int Pos { get; set; }
+    public string Text { get; set; }
+    public int UserID { get; set; }
+    public int Version { get; set; }
 
-    private Operation(OperationType type, int pos, string text, int version, int userID)
+    public Operation() { }
+
+    public Operation(OperationType type, int pos, string text, int version, int userID)
     {
         Type = type;
         Pos = pos;
@@ -190,4 +192,3 @@ public class Operation
         return CreateDeleteOp(op1.Pos, op1.Text.Substring(0, op2.Pos - op1.Pos), op1);
     }
 }
-
