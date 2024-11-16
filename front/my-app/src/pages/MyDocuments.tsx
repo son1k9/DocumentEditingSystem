@@ -93,18 +93,18 @@ const MyDocuments: React.FC = () => {
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setDocumentContent(newContent);
-
+  
     const operations = detectOperations(documentContent, newContent);
+  
     setOperationsQueue((prevOps) => [...prevOps, ...operations]);
-
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    typingTimeoutRef.current = setTimeout(() => {
-      sendChanges();
-    }, 3000);
   };
+
+  useEffect(() => {
+    // Этот эффект будет срабатывать каждый раз, когда изменяется очередь операций
+    if (operationsQueue.length > 0) {
+      sendChanges(operationsQueue);
+    }
+  }, [operationsQueue]);
 
   const detectOperations = (oldContent: string, newContent: string) => {
     const operations: Operation[] = [];
@@ -113,7 +113,6 @@ const MyDocuments: React.FC = () => {
       operations.push(Operation.createInsertOp(oldContent.length, insertedText, currentVersion, user?.user.id || 0));
     }
 
-    // Обработка операций удаления
     const deletedText = oldContent.substring(newContent.length);
     if (deletedText) {
       operations.push(Operation.createDeleteOp(newContent.length, deletedText, currentVersion, user?.user.id || 0));
@@ -122,11 +121,12 @@ const MyDocuments: React.FC = () => {
     return operations;
   };
 
-  const sendChanges = async () => {
-    if (connection && operationsQueue.length > 0 && activeDocumentIdRef.current) {
+  const sendChanges = async (operations: Operation[]) => {
+    if (connection && operations.length > 0 && activeDocumentIdRef.current) {
       try {
-        const currentQueue = [...operationsQueue];
-        setOperationsQueue([]);
+        const currentQueue = [...operations];
+        setOperationsQueue([]); // Очистка очереди после отправки
+  
         for (const operation of currentQueue) {
           const operationWithVersion = { ...operation, version: currentVersion };
           console.log('Sending operation with version:', operationWithVersion);
@@ -157,20 +157,6 @@ const MyDocuments: React.FC = () => {
       default:
         console.error('Unknown operation type:', operation.type);
         return content;
-    }
-  };
-
-  const synchronizeWithServer = async () => {
-    if (connection && activeDocumentIdRef.current) {
-      try {
-        const updatedDocument = await connection.invoke('GetDocument', activeDocumentIdRef.current);
-        setDocumentContent(updatedDocument.content);
-        setCurrentVersion(updatedDocument.version);
-        setOperationsQueue([]); // Очистить очередь локальных операций
-        console.log('Synchronized with server:', updatedDocument);
-      } catch (err) {
-        console.error('Error synchronizing with server:', err);
-      }
     }
   };
 
