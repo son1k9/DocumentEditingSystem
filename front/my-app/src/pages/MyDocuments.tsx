@@ -3,6 +3,9 @@ import * as signalR from '@microsoft/signalr';
 import { Document } from '../models/Document';
 import { useAuth } from '../context/AuthContext';
 import { Operation, OperationType } from '../utils/OperationService';
+import diff_match_patch from 'diff-match-patch';
+
+const dmp = new diff_match_patch();
 
 const MyDocuments: React.FC = () => {
   const { user } = useAuth();
@@ -108,16 +111,35 @@ const MyDocuments: React.FC = () => {
 
   const detectOperations = (oldContent: string, newContent: string) => {
     const operations: Operation[] = [];
-    const insertedText = newContent.substring(oldContent.length);
-    if (insertedText) {
-      operations.push(Operation.createInsertOp(oldContent.length, insertedText, currentVersion, user?.user.id || 0));
-    }
-
-    const deletedText = oldContent.substring(newContent.length);
-    if (deletedText) {
-      operations.push(Operation.createDeleteOp(newContent.length, deletedText, currentVersion, user?.user.id || 0));
-    }
-
+  
+    // Получаем различия между старым и новым контентом
+    const diffs = dmp.diff_main(oldContent, newContent);
+    
+    // Нужно применить стандартный процесс слияния, чтобы избавиться от "мелких" изменений
+    dmp.diff_cleanupSemantic(diffs);
+  
+    let currentPos = 0; // Позиция в старом контенте, с которой начинаем
+  
+    diffs.forEach(([operation, text]) => {
+      switch (operation) {
+        case 0: // Нет изменений
+          currentPos += text.length;
+          break;
+  
+        case 1: // Вставка текста
+          operations.push(Operation.createInsertOp(currentPos, text, currentVersion, user?.user.id || 0));
+          currentPos += text.length;
+          break;
+  
+        case -1: // Удаление текста
+          operations.push(Operation.createDeleteOp(currentPos, text, currentVersion, user?.user.id || 0));
+          break;
+  
+        default:
+          console.error('Unknown operation type');
+      }
+    });
+  
     return operations;
   };
 
