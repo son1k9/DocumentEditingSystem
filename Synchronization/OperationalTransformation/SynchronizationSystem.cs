@@ -2,61 +2,35 @@ namespace OperationalTransformation;
 
 public class SynchronizationSystem
 {
-    readonly ReaderWriterLockSlim _lock = new();
     readonly Dictionary<string, DocumentSynchronization> documents = [];
-    readonly Dictionary<string, FairLock> locks = [];
 
-    public async Task<(Operation operationToSend, int newVersion)> AddOperation(Operation op, string documentID)
+    public (Operation operationToSend, int newVersion) AddOperation(Operation op, int version, string documentID)
     {
-        _lock.EnterReadLock();
-        try
-        {
-            await locks[documentID].EnterAsync();
-            (Operation, int) result;
-            try
-            {
-                result = documents[documentID].AddOperation(op);
-            }
-            finally
-            {
-                locks[documentID].Exit();
-            }
-            return result;
-        }
-        finally
-        {
-            _lock.ExitReadLock();
-        }
+        return documents[documentID].AddOperation(op, version);
     }
 
-    public void AddDocument(string documentID)
+    public bool AddDocument(string documentID)
     {
-        _lock.EnterWriteLock();
-        try
+        if (!documents.ContainsKey(documentID))
         {
-            if (!documents.ContainsKey(documentID))
-            {
-                documents.Add(documentID, new DocumentSynchronization());
-                locks.Add(documentID, new FairLock());
-            }
+            documents.Add(documentID, new DocumentSynchronization());
+            return true;
         }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
+        return false;
+    }
+
+    public int GetVersionForDocument(string documentID)
+    {
+        return documents[documentID].Version;
+    }
+
+    public IReadOnlyList<Operation> GetOperationsForDocument(string documentID)
+    {
+        return documents[documentID].Operations;
     }
 
     public void RemoveDocument(string documentID)
     {
-        _lock.EnterWriteLock();
-        try
-        {
-            documents.Remove(documentID);
-            locks.Remove(documentID);
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
+        documents.Remove(documentID);
     }
 }

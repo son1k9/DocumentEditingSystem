@@ -8,7 +8,7 @@ public class DocumentSynchronizationClient
     readonly List<Operation> operations;
     public IReadOnlyList<Operation> Operations => operations;
 
-    int documentVersion;
+    int documentVersion = 0;
 
     int lastSentOperationIndex = -1;
     int currentSentOperationIndex = -1;
@@ -26,7 +26,7 @@ public class DocumentSynchronizationClient
 
     public string Document => document;
 
-    public Operation? SendOperation()
+    public (Operation operation, int version)?  SendOperation()
     {
         Debug.Assert(currentSentOperationIndex == -1);
 
@@ -34,8 +34,7 @@ public class DocumentSynchronizationClient
         {
             currentSentOperationIndex = ++lastSentOperationIndex;
             var op = operations[currentSentOperationIndex];
-            op.Version = documentVersion;
-            return op;
+            return (op, documentVersion);
         }
 
         return null;
@@ -75,9 +74,9 @@ public class DocumentSynchronizationTest
     {
         var syncSystem = new DocumentSynchronization();
 
-        var client1 = new DocumentSynchronizationClient([Operation.CreateInsertOp(0, "text"), Operation.CreateDeleteOp(2, "xt", version: 1)]);
+        var client1 = new DocumentSynchronizationClient([Operation.CreateInsertOp(0, "text"), Operation.CreateDeleteOp(2, "xt")]);
         var client2 = new DocumentSynchronizationClient([Operation.CreateInsertOp(0, "word"), Operation.CreateInsertOp(4, " another abcd")]);
-        var client3 = new DocumentSynchronizationClient([Operation.CreateInsertOp(0, "the"), Operation.CreateDeleteOp(0, "the", version: 3)]);
+        var client3 = new DocumentSynchronizationClient([Operation.CreateInsertOp(0, "the"), Operation.CreateDeleteOp(0, "the")]);
 
         List<DocumentSynchronizationClient> clients = [client1, client2, client3];
 
@@ -87,7 +86,8 @@ public class DocumentSynchronizationTest
             for (int i = 0; i < clients.Count; i++)
             {
                 DocumentSynchronizationClient client = clients[i];
-                results.Add(syncSystem.AddOperation(client.SendOperation()!));
+                var send = client.SendOperation()!;
+                results.Add(syncSystem.AddOperation(send.Value.operation, send.Value.version));
             }
 
             for (int i = 0; i < clients.Count; i++)

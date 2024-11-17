@@ -10,16 +10,18 @@ public class DocumentSynchronization
     // This should always be equal to last operation version + 1
     int documentVersion = 0;
 
+    public int Version => documentVersion;
+
     public IReadOnlyList<Operation> Operations => operations;
 
-    public (Operation operationToSend, int newVersion) AddOperation(Operation op)
+    public (Operation operationToSend, int newVersion) AddOperation(Operation op, int version)
     {
         Debug.Assert(op.Type != OperationType.None);
-        Debug.Assert(op.Version <= documentVersion);
+        Debug.Assert(version <= documentVersion);
 
-        if (op.Version < documentVersion)
+        if (version < documentVersion)
         {
-            int opIndex = versionToIndex[op.Version];
+            int opIndex = versionToIndex[version];
 
             for (int i = opIndex; i < operations.Count; i++)
             {
@@ -30,15 +32,12 @@ public class DocumentSynchronization
             {
                 return (op, documentVersion);
             }
-
-            op.Version = documentVersion;
         }
 
         // op.Version == documentVersion
-
-        documentVersion++;           
+       
         operations.Add(op);
-        versionToIndex[op.Version] = operations.Count - 1;
+        versionToIndex[documentVersion++] = operations.Count - 1;
         return (op, documentVersion);
     }
 }

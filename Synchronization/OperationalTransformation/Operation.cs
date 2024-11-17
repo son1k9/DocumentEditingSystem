@@ -18,16 +18,14 @@ public class Operation
     public int Pos { get; set; }
     public string Text { get; set; }
     public int UserID { get; set; }
-    public int Version { get; set; }
 
     public Operation() { }
 
-    public Operation(OperationType type, int pos, string text, int version, int userID)
+    public Operation(OperationType type, int pos, string text, int userID)
     {
         Type = type;
         Pos = pos;
         Text = text;
-        Version = version;
         UserID = userID;
     }
 
@@ -68,34 +66,34 @@ public class Operation
         return CreateNoneOp(this);
     }
 
-    public static Operation CreateNoneOp(int version = 0, int userID = 0)
+    public static Operation CreateNoneOp(int userID = 0)
     {
-        return new Operation(OperationType.None, -1, "", version, userID);
+        return new Operation(OperationType.None, -1, "", userID);
     }
 
     public static Operation CreateNoneOp(Operation oldOp)
     {
-        return new Operation(OperationType.None, -1, "", oldOp.Version, oldOp.UserID);
+        return new Operation(OperationType.None, -1, "", oldOp.UserID);
     }
 
-    public static Operation CreateInsertOp(int index, string text, int version = 0, int userID = 0)
+    public static Operation CreateInsertOp(int index, string text, int userID = 0)
     {
-        return new Operation(OperationType.Insert, index, text, version, userID);
+        return new Operation(OperationType.Insert, index, text, userID);
     }
 
     public static Operation CreateInsertOp(int index, string text, Operation oldOp)
     {
-        return new Operation(OperationType.Insert, index, text, oldOp.Version, oldOp.UserID);
+        return new Operation(OperationType.Insert, index, text, oldOp.UserID);
     }
 
-    public static Operation CreateDeleteOp(int index, string text, int version = 0, int userID = 0)
+    public static Operation CreateDeleteOp(int index, string text, int userID = 0)
     {
-        return new Operation(OperationType.Delete, index, text, version, userID);
+        return new Operation(OperationType.Delete, index, text, userID);
     }
 
     public static Operation CreateDeleteOp(int index, string text, Operation oldOp)
     {
-        return new Operation(OperationType.Delete, index, text, oldOp.Version, oldOp.UserID);
+        return new Operation(OperationType.Delete, index, text, oldOp.UserID);
     }
 
     public static Operation TransformInsertInsert(Operation op1, Operation op2, bool op1Priority = false)
