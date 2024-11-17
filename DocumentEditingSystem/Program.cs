@@ -12,6 +12,9 @@ using API.Infrastructure.Services.Implementations;
 using API.Infrastructure.Repositories.Interfaces;
 using API.Infrastructure.Repositories.Implementations;
 using API.TokenConfig;
+using System.Net.NetworkInformation;
+using MediatR.Pipeline;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +58,14 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
 builder.Services.AddScoped<IDocumentManagementRepository, DocumentManagementRepository>();
+builder.Services.AddScoped<IDocumentEditingService, DocumentEditingService>();
+builder.Services.AddScoped<IDocumentEditingRepository, DocumentEditingRepository>();
+
+builder.Services.AddMediatR(cfg =>
+{
+	cfg.RegisterServicesFromAssemblies(typeof(Ping).Assembly, typeof(Program).Assembly);
+});
+
 
 var app = builder.Build();
 

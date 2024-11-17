@@ -1,5 +1,6 @@
 ﻿using API.Domain.ValueObjects;
 using API.Domain.ValueObjects.Enums;
+using MediatR;
 
 namespace API.Domain.DocumentManagement.DocumentAggregate
 {
@@ -10,7 +11,6 @@ namespace API.Domain.DocumentManagement.DocumentAggregate
 		public string Text { get; private set; }
 		public DateTime CreationDate { get; private set; }
 		public DateTime ChangingDate { get; private set; }
-
 		public int OwnerId { get; private set; }
 
 		public Document(DocumentName documentName, string text)

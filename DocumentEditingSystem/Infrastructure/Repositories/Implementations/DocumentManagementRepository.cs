@@ -1,6 +1,8 @@
 ﻿using API.Domain.DocumentManagement.DocumentAggregate;
+using API.Domain.DocumentManagement.Events;
 using API.Infrastructure.Data;
 using API.Infrastructure.Repositories.Interfaces;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Infrastructure.Repositories.Implementations
@@ -8,10 +10,12 @@ namespace API.Infrastructure.Repositories.Implementations
 	public class DocumentManagementRepository : IDocumentManagementRepository
 	{
 		private readonly ApplicationContext _context;
+		private readonly IMediator _mediator;
 
-		public DocumentManagementRepository(ApplicationContext context)
+		public DocumentManagementRepository(ApplicationContext context, IMediator mediator)
 		{
 			_context = context;
+			_mediator = mediator;
 		}
 
 		private async Task<bool> SaveAsync()
@@ -31,7 +35,11 @@ namespace API.Infrastructure.Repositories.Implementations
 		{
 			await _context.Documents.AddAsync(document);
 
-			return await SaveAsync();
+			var result = await SaveAsync();
+
+			await _mediator.Publish(new DocumentAdded(document.Id, document.OwnerId));
+
+			return result;
 		}
 
 		public async Task<bool> UpdateDocumentAsync(Document document)
@@ -55,7 +63,7 @@ namespace API.Infrastructure.Repositories.Implementations
 
 		public async Task<Document> GetDocumentByIdAsync(int documentId)
 		{
-			return await _context.Documents.FirstOrDefaultAsync(x => x.Id == documentId); ;
+			return await _context.Documents.FirstOrDefaultAsync(x => x.Id == documentId);
 		}
 	}
 }

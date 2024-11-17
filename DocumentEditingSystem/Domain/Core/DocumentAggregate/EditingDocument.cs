@@ -4,35 +4,42 @@ namespace API.Domain.Core.DocumentAggregate
 {
 	public class EditingDocument
 	{
-		public int id { get; }
-		public DocumentName DocumentName { get; }
-		public string Text { get; private set; }
-		public List<DocumentEditor> Editors { get; private set; }
-		
-		public void AddEditor(DocumentEditor editor)
+		public int Id { get; }
+		public int OwnerId { get; }
+		//public List<int> Editors { get; private set; }
+		public List<Change> Changes { get; private set; }
+
+		public EditingDocument(int documentId, int ownerId)
 		{
-			if (editor == null) throw new ArgumentNullException("Editor cannot be null");
-			if (Editors.Contains(editor)) throw new ArgumentException("Editor has already been added");
-			Editors.Add(editor);
+			Id = documentId;
+			OwnerId = ownerId;
+			//Editors = new List<int>();
+			Changes = new List<Change>();
 		}
 
-		public void RemoveEditor(DocumentEditor editor)
+		public void AddEditor(int editorId)
 		{
-			if (editor == null) throw new ArgumentNullException("Editor cannot be null");
-			if (!Editors.Contains(editor)) throw new ArgumentException("Editor does not have access to the document");
-			Editors.Remove(editor);
+			//if (Editors.Contains(editorId)) throw new ArgumentException("The user has already been added!");
+			//Editors.Add(editorId);
 		}
 
-		public string ReadText(DocumentEditor documentEditor)
+		public void RemoveEditor(int editorId)
 		{
-			if (!Editors.Contains(documentEditor)) throw new ArgumentException("Editor does not have access to the document");
-			return Text;
+			//if (!Editors.Contains(editorId)) throw new ArgumentException("User not found!");
+			//Editors.Remove(editorId);
 		}
 
-		public void EditText(DocumentEditor documentEditor, string text)
+		public void AddChange(Change change)
 		{
-			
+			//if (!Editors.Contains(change.EditorId) & change.EditorId != OwnerId) throw new ArgumentException("The user does not have access to the document!");
+			if (change == null) throw new ArgumentNullException("Change can not be null!");
+			Changes.Add(change);
 		}
 
+		private EditingDocument()
+		{
+			//Editors = new List<int>();
+			Changes = new List<Change>();
+		}
 	}
 }
