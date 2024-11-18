@@ -1,5 +1,4 @@
 ﻿using API.Domain.DocumentManagement.DocumentAggregate;
-using API.Domain.DocumentManagement.Events;
 using API.Infrastructure.Data;
 using API.Infrastructure.Repositories.Interfaces;
 using MediatR;
@@ -36,8 +35,6 @@ namespace API.Infrastructure.Repositories.Implementations
 			await _context.Documents.AddAsync(document);
 
 			var result = await SaveAsync();
-
-			await _mediator.Publish(new DocumentAdded(document.Id, document.OwnerId));
 
 			return result;
 		}

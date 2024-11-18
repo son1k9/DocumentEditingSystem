@@ -26,26 +26,15 @@ namespace API.Infrastructure.Repositories.Implementations
 			}
 		}
 
-		public async Task AddDocumentAsync(EditingDocument editingDocument)
+		public async Task<bool> AddChangesAsync(List<Change> changes)
 		{
-			_context.EditingDocuments.Add(editingDocument);
-			await SaveAsync();
-		}
-
-		public async Task<bool> UpdateDocumentAsync(EditingDocument editingDocument)
-		{
-			_context.EditingDocuments.Update(editingDocument);
+			await _context.DocumentChanges.AddRangeAsync(changes);
 			return await SaveAsync();
 		}
 
-		public async Task<EditingDocument> GetDocumentByIdAsync(int documentId)
+		public async Task<List<Change>> GetChangesByDocumentAsync(int documentId)
 		{
-			return await _context.EditingDocuments.FirstOrDefaultAsync(x => x.Id == documentId);
-		}
-
-		public async Task<List<EditingDocument>> GetAvailableDocuments(int userId)
-		{
-			return await _context.EditingDocuments.Where(p => p.OwnerId == userId).ToListAsync();
+			return await _context.DocumentChanges.Where(p => p.DocumentId == documentId).ToListAsync();
 		}
 	}
 }

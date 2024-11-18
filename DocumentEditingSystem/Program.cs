@@ -58,7 +58,6 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
 builder.Services.AddScoped<IDocumentManagementRepository, DocumentManagementRepository>();
-builder.Services.AddScoped<IDocumentEditingService, DocumentEditingService>();
 builder.Services.AddScoped<IDocumentEditingRepository, DocumentEditingRepository>();
 
 builder.Services.AddMediatR(cfg =>
