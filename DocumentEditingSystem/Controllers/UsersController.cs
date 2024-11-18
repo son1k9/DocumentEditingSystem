@@ -21,7 +21,7 @@ namespace DocumentEditingSystem.Controllers
 			_userManagementService = userManagementService;
 		}
 
-		[HttpGet("Authorize")]
+		[HttpPost("Authorize")]
 		public IResult Autorize(string username, string password)
 		{
 			try
