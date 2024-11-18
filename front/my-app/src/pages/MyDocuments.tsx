@@ -13,8 +13,7 @@ const MyDocuments: React.FC = () => {
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
   const [documentContent, setDocumentContent] = useState('');
-  const [currentVersion, setCurrentVersion] = useState<number>(0); // Текущая версия
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [currentVersion, setCurrentVersion] = useState<number>(0);
   const [operationsQueue, setOperationsQueue] = useState<Operation[]>([]);
   const activeDocumentIdRef = useRef<string | null>(null);
 
@@ -39,7 +38,13 @@ const MyDocuments: React.FC = () => {
         .withAutomaticReconnect()
         .build();
 
-      newConnection.on('JoinedDocument', (joinedDocumentId) => {
+      newConnection.on('JoinedDocument', (operations : Operation[], version : number, joinedDocumentId) => {
+
+        for (const operation of operations){
+          setDocumentContent((prevContent) => applyOperationToContent(prevContent, operation));
+          setCurrentVersion(version);
+        }
+
         console.log(`Joined document ${joinedDocumentId} group successfully`);
       });
 
@@ -103,7 +108,6 @@ const MyDocuments: React.FC = () => {
   };
 
   useEffect(() => {
-    // Этот эффект будет срабатывать каждый раз, когда изменяется очередь операций
     if (operationsQueue.length > 0) {
       sendChanges(operationsQueue);
     }
@@ -112,27 +116,25 @@ const MyDocuments: React.FC = () => {
   const detectOperations = (oldContent: string, newContent: string) => {
     const operations: Operation[] = [];
   
-    // Получаем различия между старым и новым контентом
     const diffs = dmp.diff_main(oldContent, newContent);
     
-    // Нужно применить стандартный процесс слияния, чтобы избавиться от "мелких" изменений
     dmp.diff_cleanupSemantic(diffs);
   
-    let currentPos = 0; // Позиция в старом контенте, с которой начинаем
+    let currentPos = 0;
   
     diffs.forEach(([operation, text]) => {
       switch (operation) {
-        case 0: // Нет изменений
+        case 0:
           currentPos += text.length;
           break;
   
-        case 1: // Вставка текста
-          operations.push(Operation.createInsertOp(currentPos, text, currentVersion, user?.user.id || 0));
+        case 1:
+          operations.push(Operation.createInsertOp(currentPos, text, user?.user.id || 0));
           currentPos += text.length;
           break;
   
-        case -1: // Удаление текста
-          operations.push(Operation.createDeleteOp(currentPos, text, currentVersion, user?.user.id || 0));
+        case -1:
+          operations.push(Operation.createDeleteOp(currentPos, text, user?.user.id || 0));
           break;
   
         default:
@@ -147,12 +149,11 @@ const MyDocuments: React.FC = () => {
     if (connection && operations.length > 0 && activeDocumentIdRef.current) {
       try {
         const currentQueue = [...operations];
-        setOperationsQueue([]); // Очистка очереди после отправки
+        setOperationsQueue([]);
   
         for (const operation of currentQueue) {
-          const operationWithVersion = { ...operation, version: currentVersion };
-          console.log('Sending operation with version:', operationWithVersion);
-          await connection.invoke('SendOperation', operationWithVersion);
+          console.log('Sending operation with version:', operation);
+          await connection.invoke('SendOperation', operation, currentVersion);
         }
       } catch (err) {
         console.error('Error sending changes:', err);
@@ -161,13 +162,8 @@ const MyDocuments: React.FC = () => {
   };
 
   const handleReceivedOperation = (operation: Operation, version: number) => {
-    /*if (version !== currentVersion) {
-      console.warn('Version mismatch:', { localVersion: currentVersion, receivedVersion: version });
-      synchronizeWithServer();
-    } else {*/
       setDocumentContent((prevContent) => applyOperationToContent(prevContent, operation));
       setCurrentVersion(version);
-    //}
   };
 
   const applyOperationToContent = (content: string, operation: Operation): string => {
