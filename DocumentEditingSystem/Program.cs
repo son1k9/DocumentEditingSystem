@@ -15,12 +15,14 @@ using API.TokenConfig;
 using System.Net.NetworkInformation;
 using MediatR.Pipeline;
 using MediatR;
+using API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -82,5 +84,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<DocumentsHub>("/hubs/documents");
 
 app.Run();

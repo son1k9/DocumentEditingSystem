@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using OperationalTransformation;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace API.Hubs
