@@ -4,6 +4,12 @@ import { Document } from '../models/Document';
 import { useAuth } from '../context/AuthContext';
 import { Operation, OperationType } from '../utils/OperationService';
 import diff_match_patch from 'diff-match-patch';
+import { getDocumentsForUser } from '../services/documentService';
+import useModal from '../hooks/useModal';
+import AddDocumentForm from '../forms/AddDocumentForm';
+import UpdateDocumentForm from '../forms/UpdateDocumentForm';
+import DeleteDocumentForm from '../forms/DeleteDocumentForm';
+
 
 const dmp = new diff_match_patch();
 
@@ -16,20 +22,50 @@ const MyDocuments: React.FC = () => {
   const [currentVersion, setCurrentVersion] = useState<number>(0);
   const [operationsQueue, setOperationsQueue] = useState<Operation[]>([]);
   const activeDocumentIdRef = useRef<string | null>(null);
+  const { isOpen, openModal, closeModal } = useModal();
+  const [formType, setFormType] = useState<'add' | 'update' | 'delete' | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
-  const mockDocuments = [
-    {
-      id: 'aefaefs',
-      title: 'Тестовый документ',
-      content: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
+  const openDocumentModal = (document: Document | null, type: 'add' | 'update' | 'delete') => {
+    setSelectedDocument(document);
+    setFormType(type);
+    openModal();
+  };
+
+  const refreshDocuments = () => {
+    const fetchDocuments = async () => {
+      try{
+        if (user?.user.id){
+          const fetchDocuments = await getDocumentsForUser();
+          setDocuments(fetchDocuments);
+        }
+      }
+      catch (error)
+      {
+        console.error('Ошибка загрузки документов', error);
+      }
+    }
+
+    fetchDocuments();
+  };
 
   useEffect(() => {
-    setDocuments(mockDocuments);
-  }, []);
+    const fetchDocuments = async () => {
+      try{
+        if (user?.user.id){
+          const fetchDocuments = await getDocumentsForUser();
+          setDocuments(fetchDocuments);
+        }
+      }
+      catch (error)
+      {
+        console.error('Ошибка загрузки документов', error);
+      }
+    }
+
+    fetchDocuments();
+
+  }, [user]);
 
   useEffect(() => {
     const initializeConnection = async () => {
@@ -93,9 +129,9 @@ const MyDocuments: React.FC = () => {
   }, [activeDocumentId, connection]);
 
   const handleDocumentSelect = (documentId: string) => {
-    const selectedDocument = documents.find((doc) => doc.id === documentId);
+    const selectedDocument = documents.find((doc) => doc.id.toString() === documentId);
     setActiveDocumentId(documentId);
-    setDocumentContent(selectedDocument?.content || '');
+    setDocumentContent(selectedDocument?.text || '');
     setCurrentVersion(0);
     console.log('Selected document:', documentId, selectedDocument);
   };
@@ -190,6 +226,7 @@ const MyDocuments: React.FC = () => {
 
   return (
     <div className="flex-1 flex overflow-hidden min-h-[calc(100vh-120px)]">
+      
       <div className="flex-1 bg-white p-6 shadow-md flex flex-col">
         <h1 className="text-2xl font-bold mb-4">Редактирование документа</h1>
         <div className="border border-gray-300 p-4 flex-1 overflow-auto">
@@ -201,6 +238,7 @@ const MyDocuments: React.FC = () => {
           />
         </div>
       </div>
+
       <div className="w-64 bg-gray-100 p-4 border-l border-gray-300 shadow-md flex flex-col">
         <h2 className="text-xl font-bold mb-4">Мои документы</h2>
         <ul className="space-y-2 flex-grow overflow-auto">
@@ -208,15 +246,65 @@ const MyDocuments: React.FC = () => {
             <li
               key={doc.id}
               className={`p-2 bg-white hover:bg-gray-200 cursor-pointer border rounded ${
-                activeDocumentId === doc.id ? 'bg-gray-200' : ''
+                activeDocumentId === doc?.id?.toString() ? 'bg-gray-200' : ''
               }`}
-              onClick={() => handleDocumentSelect(doc.id)}
             >
-              {doc.title}
+              <div className="flex justify-between items-center">
+                <span onClick={() => handleDocumentSelect(doc.id.toString())}>
+                  {doc.documentName}
+                </span>
+                  <button
+                    onClick={() =>
+                      openDocumentModal(doc, user?.user.id === doc.ownerId ? 'update' : 'delete')
+                    }
+                    className="ml-2 text-gray-700 hover:text-black transition duration-200"
+                  >
+                    ⚙️
+                  </button>
+              </div>
             </li>
           ))}
         </ul>
+        <button
+          className="btn mt-4 hover:bg-slate-500 hover:text-white transition-all duration-300"
+          onClick={() => openDocumentModal(null, 'add')}
+        >
+          Добавить документ
+        </button>
       </div>
+
+      {isOpen && formType === 'add' && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <AddDocumentForm closeModal={closeModal} refreshDocuments={refreshDocuments} />
+          </div>
+        </div>
+      )}
+
+      {isOpen && formType === 'update' && selectedDocument && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <UpdateDocumentForm
+              documentId={selectedDocument.id}
+              //currentEditors={selectedDocument.editors.map((e) => e.username)}
+              closeModal={closeModal}
+              refreshDocuments={refreshDocuments}
+            />
+          </div>
+        </div>
+      )}
+
+      {isOpen && formType === 'delete' && selectedDocument && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <DeleteDocumentForm
+              documentId={selectedDocument.id}
+              closeModal={closeModal}
+              refreshDocuments={refreshDocuments}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

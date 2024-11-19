@@ -26,9 +26,7 @@ export const login = async (data: LoginInput): Promise<LoginResponse> => {
 
         const authToken = `Bearer ${access_token.result}`;
 
-        const userResponse = await apiClient.post("/users/userdata", {}, {
-            headers: {Authorization: authToken}
-        });
+        const userResponse = await apiClient.post("/users/userdata");
 
         const user = userResponse.data;
 
