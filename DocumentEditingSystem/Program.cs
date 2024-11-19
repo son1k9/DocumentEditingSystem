@@ -16,6 +16,7 @@ using System.Net.NetworkInformation;
 using MediatR.Pipeline;
 using MediatR;
 using API.Hubs;
+using OperationalTransformation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +35,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	.AddJwtBearer(options =>
 	{
-		options.TokenValidationParameters = new TokenValidationParameters
+		options.RequireHttpsMetadata = false;
+
+
+        options.TokenValidationParameters = new TokenValidationParameters
 		{
 			ValidateIssuer = true,
 			ValidIssuer = AuthOptions.ISSUER,
@@ -44,15 +48,34 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 			IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
 			ValidateIssuerSigningKey = true,
 		};
-	});
+
+        options.Authority = "Authority URL";
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    (path.StartsWithSegments("/hubs/documents")))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
 
 builder.Services.AddCors(options =>
 {
 	options.AddDefaultPolicy(builder =>
 	{
-		builder.WithOrigins("http://localhost:5019", "https://localhost:7265")
+		builder.WithOrigins("http://localhost:5173", "http://localhost:5174")
 			.AllowAnyMethod()
-			.AllowAnyHeader();
+			.AllowAnyHeader()
+			.AllowCredentials();
 	});
 });
 
@@ -61,6 +84,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
 builder.Services.AddScoped<IDocumentManagementRepository, DocumentManagementRepository>();
 builder.Services.AddScoped<IDocumentEditingRepository, DocumentEditingRepository>();
+builder.Services.AddSingleton<SynchronizationSystem>();
 
 builder.Services.AddMediatR(cfg =>
 {

@@ -34,7 +34,9 @@ const MyDocuments: React.FC = () => {
   useEffect(() => {
     const initializeConnection = async () => {
       const newConnection = new signalR.HubConnectionBuilder()
-        .withUrl('http://localhost:5019/hubs/documents')
+        .withUrl('http://localhost:5019/hubs/documents',
+          {accessTokenFactory: () => user?.token}
+        )
         .withAutomaticReconnect()
         .build();
 
@@ -94,7 +96,7 @@ const MyDocuments: React.FC = () => {
     const selectedDocument = documents.find((doc) => doc.id === documentId);
     setActiveDocumentId(documentId);
     setDocumentContent(selectedDocument?.content || '');
-    setCurrentVersion(0); // Сброс версии при переключении документа
+    setCurrentVersion(0);
     console.log('Selected document:', documentId, selectedDocument);
   };
 
@@ -162,9 +164,17 @@ const MyDocuments: React.FC = () => {
   };
 
   const handleReceivedOperation = (operation: Operation, version: number) => {
-      setDocumentContent((prevContent) => applyOperationToContent(prevContent, operation));
-      setCurrentVersion(version);
-  };
+
+    const oldOp = new Operation(operation.Type, operation.Pos, operation.Text, operation.UserID);
+
+    for (let i = 0; i < operationsQueue.length; i++){
+      operation = operation.transform(operationsQueue[i], true);
+      operationsQueue[i] = operationsQueue[i].transform(oldOp);
+    }
+
+    setDocumentContent((prevContent) => applyOperationToContent(prevContent, operation));
+    setCurrentVersion(version);
+};
 
   const applyOperationToContent = (content: string, operation: Operation): string => {
     switch (operation.type) {

@@ -18,7 +18,7 @@ export interface LoginResponse {
 
 export const login = async (data: LoginInput): Promise<LoginResponse> => {
     try {
-        const response = await apiClient.get(`/users/authorize?username=${data.username}&password=${data.password}`);
+        const response = await apiClient.post(`/users/authorize?username=${data.username}&password=${data.password}`);
         const { access_token, refreshToken, username } = response.data;
 
         Cookies.set('token', access_token.result);
