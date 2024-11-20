@@ -10,6 +10,8 @@ namespace API.Infrastructure.Data.Configuration
 	{
 		public void Configure(EntityTypeBuilder<Change> builder)
 		{
+			builder.ToTable("Changes");
+
 			builder.HasKey(p => p.Id);
 			builder.HasOne<Document>().WithMany().HasForeignKey(p => p.DocumentId);
 			builder.HasOne<User>().WithMany().HasForeignKey(p => p.EditorId);

@@ -31,7 +31,7 @@ namespace API.Infrastructure.Services.Implementations
 
             if (document.OwnerId != userId)
             {
-                throw new ArgumentException("Document was not found");
+                throw new ArgumentException("User does not have privileges to do this");
             }
 
             await _documentManagementRepository.DeleteDocumentAsync(document);
@@ -50,7 +50,7 @@ namespace API.Infrastructure.Services.Implementations
             return documentsR;
 		}
 
-		public async Task LoadDocument(IFormFile documentFile, int userId, Username username)
+        public async Task LoadDocument(IFormFile documentFile, int userId, Username username)
         {
             string text;
 
@@ -72,7 +72,7 @@ namespace API.Infrastructure.Services.Implementations
 
         }
 
-        public async Task<DocumentR> UpdateDocument(IFormFile newDocumentText, int userId, int documentId)
+        public async Task UpdateDocument(string text, int userId, int documentId)
         {
             Document document = await _documentManagementRepository.GetDocumentByIdAsync(documentId);
             if (document == null)
@@ -82,19 +82,27 @@ namespace API.Infrastructure.Services.Implementations
 
             if (document.OwnerId != userId)
             {
+                throw new ArgumentException("User does not have privileges to do this");
+            }
+
+            document.UpdateDocument(text);
+
+			await _documentManagementRepository.UpdateDocumentAsync(document);
+        }
+
+        public async Task<DocumentR> GetDocumentById(int documentId, int userId)
+        {
+            Document document = await _documentManagementRepository.GetDocumentByIdAsync(documentId);
+            
+            if (document == null)
+            {
                 throw new ArgumentException("Document was not found");
             }
 
-            string newText;
-
-			using (var reader = new StreamReader(newDocumentText.OpenReadStream()))
-			{
-				newText = await reader.ReadToEndAsync();
-			}
-
-            document.UpdateDocument(newText);
-
-			await _documentManagementRepository.UpdateDocumentAsync(document);
+            if (document.OwnerId != userId)
+            {
+                throw new ArgumentException("User does not have privileges to do this");
+            }
 
             return DocumentMapper.DocumentToDto(document);
         }

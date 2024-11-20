@@ -2,42 +2,63 @@ using System.Diagnostics;
 
 namespace OperationalTransformation;
 
-public class DocumentSynchronization
+public class DocumentSynchronization(int documentID, int version)
 {
+    public int DocumentID { get; } = documentID;
+
     readonly List<Operation> operations = [];
     readonly Dictionary<int, int> versionToIndex = [];
 
     // This should always be equal to last operation version + 1
-    int documentVersion = 0;
-
-    public int Version => documentVersion;
+    public int DocumentVersion{ get; private set; } = version;
+    public int StartVersion { get; private set; } = version;
 
     public IReadOnlyList<Operation> Operations => operations;
 
-    public (Operation operationToSend, int newVersion) AddOperation(Operation op, int version)
+    public void Clear()
     {
-        Debug.Assert(op.Type != OperationType.None);
-        Debug.Assert(version <= documentVersion);
+        operations.Clear();
+        versionToIndex.Clear();
+        StartVersion = DocumentVersion;
+    }
 
-        if (version < documentVersion)
+    public (Operation operationToSend, int newVersion) AddOperation(Operation operation, int version, IOperationsProvider operationsProvider)
+    {
+        Debug.Assert(operation.Type != OperationType.None);
+        Debug.Assert(version <= DocumentVersion);
+
+
+        // TODO: Test this
+        if (version < StartVersion)
+        {
+            var (ops, lastVersion) = operationsProvider.GetOperations(DocumentID, version);
+            Debug.Assert(ops.Count != 0);
+            foreach(var op in ops)
+            {
+                operation = operation.Transform(op);
+            }
+            version = lastVersion;
+        }
+
+        if (version < DocumentVersion)
         {
             int opIndex = versionToIndex[version];
 
             for (int i = opIndex; i < operations.Count; i++)
             {
-                op = op.Transform(operations[i]);
+                operation = operation.Transform(operations[i]);
             }
 
-            if (op.Type == OperationType.None)
+            if (operation.Type == OperationType.None)
             {
-                return (op, documentVersion);
+                return (operation, DocumentVersion);
             }
         }
 
-        // op.Version == documentVersion
+        // op.Version == DocumentVersion
        
-        operations.Add(op);
-        versionToIndex[documentVersion++] = operations.Count - 1;
-        return (op, documentVersion);
+        operations.Add(operation);
+        versionToIndex[DocumentVersion++] = operations.Count - 1;
+        return (operation, DocumentVersion);
     }
 }

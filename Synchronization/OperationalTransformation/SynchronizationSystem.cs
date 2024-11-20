@@ -2,34 +2,39 @@ namespace OperationalTransformation;
 
 public class SynchronizationSystem
 {
-    readonly Dictionary<string, DocumentSynchronization> documents = [];
+    readonly Dictionary<int, DocumentSynchronization> documents = [];
 
-    public (Operation operationToSend, int newVersion) AddOperation(Operation op, int version, string documentID)
+    public (Operation operationToSend, int newVersion) AddOperation(Operation op, int version, int documentID, IOperationsProvider operationsProvider)
     {
-        return documents[documentID].AddOperation(op, version);
+        return documents[documentID].AddOperation(op, version, operationsProvider);
     }
 
-    public bool AddDocument(string documentID)
+    public bool AddDocument(int documentID, int version)
     {
         if (!documents.ContainsKey(documentID))
         {
-            documents.Add(documentID, new DocumentSynchronization());
+            documents.Add(documentID, new DocumentSynchronization(documentID, version));
             return true;
         }
         return false;
     }
 
-    public int GetVersionForDocument(string documentID)
+    public void ClearDocument(int documentID)
     {
-        return documents[documentID].Version;
+        documents[documentID].Clear();
     }
 
-    public IReadOnlyList<Operation> GetOperationsForDocument(string documentID)
+    public int GetVersionForDocument(int documentID)
+    {
+        return documents[documentID].DocumentVersion;
+    }
+
+    public IReadOnlyList<Operation> GetOperationsForDocument(int documentID)
     {
         return documents[documentID].Operations;
     }
 
-    public void RemoveDocument(string documentID)
+    public void RemoveDocument(int documentID)
     {
         documents.Remove(documentID);
     }

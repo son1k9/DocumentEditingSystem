@@ -72,7 +72,7 @@ public class DocumentSynchronizationTest
     [Fact]
     public void AddOperation_Test()
     {
-        var syncSystem = new DocumentSynchronization();
+        var syncSystem = new DocumentSynchronization(0, 0);
 
         var client1 = new DocumentSynchronizationClient([Operation.CreateInsertOp(0, "text"), Operation.CreateDeleteOp(2, "xt")]);
         var client2 = new DocumentSynchronizationClient([Operation.CreateInsertOp(0, "word"), Operation.CreateInsertOp(4, " another abcd")]);
@@ -87,7 +87,7 @@ public class DocumentSynchronizationTest
             {
                 DocumentSynchronizationClient client = clients[i];
                 var send = client.SendOperation()!;
-                results.Add(syncSystem.AddOperation(send.Value.operation, send.Value.version));
+                results.Add(syncSystem.AddOperation(send.Value.operation, send.Value.version, null));
             }
 
             for (int i = 0; i < clients.Count; i++)
