@@ -25,6 +25,7 @@ const MyDocuments: React.FC = () => {
   const { isOpen, openModal, closeModal } = useModal();
   const [formType, setFormType] = useState<'add' | 'update' | 'delete' | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openDocumentModal = (document: Document | null, type: 'add' | 'update' | 'delete') => {
     setSelectedDocument(document);
@@ -146,9 +147,21 @@ const MyDocuments: React.FC = () => {
   };
 
   useEffect(() => {
-    if (operationsQueue.length > 0) {
-      sendChanges(operationsQueue);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
     }
+
+    timerRef.current = setTimeout(() => {
+      if (operationsQueue.length > 0) {
+        sendChanges(operationsQueue);
+      }
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
   }, [operationsQueue]);
 
   const detectOperations = (oldContent: string, newContent: string) => {
