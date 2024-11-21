@@ -5,6 +5,7 @@ namespace API.Infrastructure.Repositories.Interfaces
 	public interface IDocumentEditingRepository
 	{
 		Task<bool> AddChangesAsync(List<Change> changes);
-		Task<List<Change>> GetChangesByDocumentAsync(int documentId);
+		List<Change> GetChangesByDocument(int documentId, int versionStartFrom = -1);
+		Task<int> GetLastVersionForDocument(int documentID);
 	}
 }

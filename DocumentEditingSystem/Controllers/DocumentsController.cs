@@ -48,22 +48,22 @@ namespace API.Controllers
 			
 		}
 
-		[HttpPost("UpdateDocument")]
-		[Authorize]
-		public async Task<IResult> UpdateDocument(IFormFile file, int documentId)
-		{
-			if (file.ContentType != "text/plain")
-			{
-				return Results.BadRequest("File type is incorrect");
-			}
+		// [HttpPost("UpdateDocument")]
+		// [Authorize]
+		// public async Task<IResult> UpdateDocument(IFormFile file, int documentId)
+		// {
+		// 	if (file.ContentType != "text/plain")
+		// 	{
+		// 		return Results.BadRequest("File type is incorrect");
+		// 	}
 
-			int userId = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+		// 	int userId = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
-			DocumentR document = await _documentManagementService.UpdateDocument(file, userId, documentId);
+		// 	DocumentR document = await _documentManagementService.UpdateDocument(file, userId, documentId);
 
-			return Results.Ok(document);
+		// 	return Results.Ok(document);
 
-		}
+		// }
 
 		[HttpGet("GetAvailableDocuments")]
 		[Authorize]
@@ -89,6 +89,15 @@ namespace API.Controllers
 
 		}
 
+		[HttpPost("GetDocument")]
+		[Authorize]
+		public async Task<IResult> GetDocument(int documentId)
+		{
+			int userId = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
+			var document = await _documentManagementService.GetDocumentById(documentId, userId);
+
+			return Results.Ok(document);
+		}
 	}
 }

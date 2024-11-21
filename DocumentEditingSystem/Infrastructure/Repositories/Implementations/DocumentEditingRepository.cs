@@ -32,9 +32,28 @@ namespace API.Infrastructure.Repositories.Implementations
 			return await SaveAsync();
 		}
 
-		public async Task<List<Change>> GetChangesByDocumentAsync(int documentId)
+		public List<Change> GetChangesByDocument(int documentId, int versionStartFrom)
 		{
-			return await _context.DocumentChanges.Where(p => p.DocumentId == documentId).ToListAsync();
+			var query = _context.DocumentChanges.Where(c => c.DocumentId == documentId);
+
+			if (versionStartFrom != -1)
+			{
+				query.Where(c => c.Version >= versionStartFrom);
+			}
+
+			return query.OrderBy(c => c.Version).ToList();
 		}
-	}
+
+        public async Task<int> GetLastVersionForDocument(int documentID)
+        {
+            var lastChange = await _context.DocumentChanges.Where(c => c.DocumentId == documentID).OrderByDescending(c => c.Version).FirstOrDefaultAsync();
+
+			if (lastChange == null)
+			{
+				return 0;
+			}
+
+			return lastChange.Version + 1;
+        }
+    }
 }

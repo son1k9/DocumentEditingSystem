@@ -58,7 +58,7 @@ namespace API.Infrastructure.Repositories.Implementations
 			return await _context.Documents.Where(p => p.OwnerId == ownerId).ToListAsync();
 		}
 
-		public async Task<Document> GetDocumentByIdAsync(int documentId)
+		public async Task<Document?> GetDocumentByIdAsync(int documentId)
 		{
 			return await _context.Documents.FirstOrDefaultAsync(x => x.Id == documentId);
 		}

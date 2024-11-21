@@ -15,7 +15,7 @@ namespace API.Infrastructure.Data.Configuration
 
 			builder.OwnsOne(p => p.Username, a =>
 			{
-				a.Property(u => u.Value).HasColumnName("username");
+				a.Property(u => u.Value).HasColumnName("Username");
 				a.Property(u => u.Value).HasColumnType("varchar");
 				a.Property(u => u.Value).IsRequired();
 				a.HasIndex(u => u.Value).IsUnique();

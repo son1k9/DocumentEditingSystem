@@ -10,9 +10,10 @@ namespace API.Infrastructure.Services.Interfaces
     public interface IDocumentManagementService
     {
         Task LoadDocument(IFormFile documentFile, int userId, Username username);
-        Task<DocumentR> UpdateDocument(IFormFile newDocumentText, int userId, int documentId);
+        Task UpdateDocument(string text, int userId, int documentId);
         Task<List<DocumentR>> GetAvailableDocuments(int userId);
         Task DeleteDocument(int documentId, int userId);
+        Task<DocumentR> GetDocumentById(int documentId, int userId);
     }
 
 }
