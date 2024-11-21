@@ -133,7 +133,6 @@ const MyDocuments: React.FC = () => {
     const selectedDocument = documents.find((doc) => doc.id.toString() === documentId);
     setActiveDocumentId(documentId);
     setDocumentContent(selectedDocument?.text || '');
-    setCurrentVersion(0);
     console.log('Selected document:', documentId, selectedDocument);
   };
 
@@ -213,6 +212,9 @@ const MyDocuments: React.FC = () => {
   };
 
   const handleReceivedOperation = (operation: Operation, version: number) => {
+    if (version < currentVersion){
+      return;
+    }
 
     const oldOp = new Operation(operation.Type, operation.Pos, operation.Text, operation.UserID);
 
