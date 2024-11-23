@@ -49,7 +49,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         return base.OnConnectedAsync();
     }
 
-    public override Task OnDisconnectedAsync(Exception? exception)
+    public async override Task OnDisconnectedAsync(Exception? exception)
     {
         var connectionID = Context.ConnectionId;
 
@@ -65,7 +65,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
 
                 Debug.Assert(document != null);
 
-                SaveDocument(document.Document);
+                await SaveDocument(document.Document);
 
                 logger.LogInformation("No connection left in group {documentID}. Group was removed", documentID);
             }
@@ -77,7 +77,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
             logger.LogError("With exception: {exception}.", exception.ToString());
         }
 
-        return base.OnDisconnectedAsync(exception);
+        await base.OnDisconnectedAsync(exception);
     }
 
     public async Task JoinDocument(int documentID)
@@ -144,7 +144,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         }
     }
 
-    private async void SaveDocument(DocumentSynchronization documentSynchronization)
+    private async Task SaveDocument(DocumentSynchronization documentSynchronization)
     {
         var operations = documentSynchronization.OperationsWithVersion();
         documentSynchronization.Clear();
