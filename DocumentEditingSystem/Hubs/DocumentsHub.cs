@@ -1,25 +1,41 @@
-﻿using API.Domain.ValueObjects.Enums;
+﻿using API.Domain.Core.DocumentAggregate;
+using API.Domain.ValueObjects.Enums;
 using API.Infrastructure.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using OperationalTransformation;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace API.Hubs;
 
 [Authorize]
-public class DocumentsHub(SynchronizationSystem synchronizationSystem,
-                          ILogger<DocumentsHub> logger,
+public class DocumentsHub(ILogger<DocumentsHub> logger,
                           IDocumentManagementRepository documentsRepository,
                           IDocumentEditingRepository changesRepository) : Hub
 {
-    readonly static ReaderWriterLockSlim _lock = new();
+    class DocumentData(FairLock _lock, int count, DocumentSynchronization document)
+    {
+        public FairLock Lock { get; } = _lock;
+        int _connectionCount = count;
+        public int ConnectionsCount => _connectionCount;
+        public DocumentSynchronization Document = document;
 
-    readonly static Dictionary<int, int> groupConnectionsCount = [];
-    readonly static Dictionary<string, int> connectionGroup = [];
-    readonly static Dictionary<int, FairLock> documentLock = [];
+        public void IncrementCount()
+        {
+            Interlocked.Increment(ref _connectionCount);
+        }
 
-    readonly SynchronizationSystem synchronizationSystem = synchronizationSystem;
+        public void DecrementCount()
+        {
+            Interlocked.Decrement(ref _connectionCount);
+            Debug.Assert(ConnectionsCount > 0);
+        }
+    }
+
+    readonly static ConcurrentDictionary<string, int> connectionGroup = [];
+    readonly static ConcurrentDictionary<int, DocumentData> documents = [];
+
     readonly IDocumentManagementRepository documentsRepository = documentsRepository;
     readonly IDocumentEditingRepository changesRepository = changesRepository;
     readonly IOperationsProvider operationsProvider = new OperationsProvider(changesRepository);
@@ -37,29 +53,22 @@ public class DocumentsHub(SynchronizationSystem synchronizationSystem,
     {
         var connectionID = Context.ConnectionId;
 
-        _lock.EnterWriteLock();
-        try
+        if (connectionGroup.Remove(connectionID, out int documentID))
         {
-            if (connectionGroup.Remove(connectionID, out int documentID))
+            logger.LogInformation("Connection {connectionID} removed from group {documentID}.", connectionID, documentID);
+
+            documents[documentID].DecrementCount();
+
+            if (documents[documentID].ConnectionsCount <= 0)
             {
-                logger.LogInformation("Connection {connectionID} removed from group {documentID}.", connectionID, documentID);
+                documents.Remove(documentID, out var document);
 
-                groupConnectionsCount[documentID]--;
+                Debug.Assert(document != null);
 
-                Debug.Assert(groupConnectionsCount[documentID] >= 0);
+                SaveDocument(document.Document);
 
-                if (groupConnectionsCount[documentID] == 0)
-                {
-                    groupConnectionsCount.Remove(documentID);
-                    documentLock.Remove(documentID);
-                    synchronizationSystem.RemoveDocument(documentID);
-                    logger.LogInformation("No connection left in group {documentID}. Group was removed", documentID);
-                }
+                logger.LogInformation("No connection left in group {documentID}. Group was removed", documentID);
             }
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
         }
 
         logger.LogInformation("Connection ended. ID:{ID}", connectionID);
@@ -67,6 +76,7 @@ public class DocumentsHub(SynchronizationSystem synchronizationSystem,
         {
             logger.LogError("With exception: {exception}.", exception.ToString());
         }
+
         return base.OnDisconnectedAsync(exception);
     }
 
@@ -76,33 +86,7 @@ public class DocumentsHub(SynchronizationSystem synchronizationSystem,
 
         // TODO: check privileges first and check if document exists in db
 
-        bool connectionAlreadyInGroup = false;
-
-        _lock.EnterWriteLock();
-        try
-        {
-            connectionAlreadyInGroup = !connectionGroup.TryAdd(connectionID, documentID);
-
-            if (!connectionAlreadyInGroup)
-            {
-                var version = await changesRepository.GetLastVersionForDocument(documentID);
-
-                var documentAlreadyExist = !synchronizationSystem.AddDocument(documentID, version);
-
-                if (!documentAlreadyExist)
-                {
-                    documentLock.Add(documentID, new FairLock());
-                    groupConnectionsCount.Add(documentID, 0);
-                }
-
-                groupConnectionsCount[documentID]++;
-            }
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
-
+        var connectionAlreadyInGroup = !connectionGroup.TryAdd(connectionID, documentID);
         if (connectionAlreadyInGroup)
         {
             logger.LogInformation("Failed to add connection {connectionID} to group {documentID}." +
@@ -113,25 +97,27 @@ public class DocumentsHub(SynchronizationSystem synchronizationSystem,
             return;
         }
 
-        _lock.EnterReadLock();
+        var documentAlreadyExist = documents.ContainsKey(documentID);
+        if (!documentAlreadyExist)
+        {
+            var version = await changesRepository.GetLastVersionForDocument(documentID);
+            var documentAdded = documents.TryAdd(documentID, new DocumentData(new FairLock(), 0, new DocumentSynchronization(documentID, version)));
+            Debug.Assert(documentAdded);
+        }
+
+        var document = documents[documentID];
+        document.IncrementCount();
+        await document.Lock.EnterAsync();
         try
         {
-            await documentLock[documentID].EnterAsync();
-            try
-            {
-                var operations = synchronizationSystem.GetOperationsForDocument(documentID);
-                var version = synchronizationSystem.GetVersionForDocument(documentID);
-                await Groups.AddToGroupAsync(connectionID, documentID.ToString());
-                await Clients.Caller.SendAsync("JoinedDocument", operations, version, documentID);
-            }
-            finally
-            {
-                documentLock[documentID].Exit();
-            }
+            var operations = document.Document.Operations;
+            var version = document.Document.DocumentVersion;
+            await Groups.AddToGroupAsync(connectionID, documentID.ToString());
+            await Clients.Caller.SendAsync("JoinedDocument", operations, version, documentID);
         }
         finally
         {
-            _lock.ExitReadLock();
+            document.Lock.Exit();
         }
 
         logger.LogInformation("Connection {connectionID} added to group {documentID}.", connectionID, documentID);
@@ -143,25 +129,44 @@ public class DocumentsHub(SynchronizationSystem synchronizationSystem,
 
         // TODO: check privileges first
 
-        _lock.EnterReadLock();
+        var documentID = connectionGroup[connectionID];
+        var document = documents[documentID];
+        await document.Lock.EnterAsync();
         try
         {
-            var documentID = connectionGroup[connectionID];
-            await documentLock[documentID].EnterAsync();
-            try
-            {
-                var (opToSend, nextVersion) = synchronizationSystem.AddOperation(op, version, documentID, operationsProvider);
-                await Clients.Caller.SendAsync("ReceivedAcknowledge", nextVersion);
-                await Clients.OthersInGroup(documentID.ToString()).SendAsync("ReceivedOperation", opToSend, nextVersion);
-            }
-            finally
-            {
-                documentLock[documentID].Exit();
-            }
+            var (opToSend, nextVersion) = document.Document.AddOperation(op, version, operationsProvider);
+            await Clients.Caller.SendAsync("ReceivedAcknowledge", nextVersion);
+            await Clients.OthersInGroup(documentID.ToString()).SendAsync("ReceivedOperation", opToSend, nextVersion);
         }
         finally
         {
-            _lock.ExitReadLock();
+            document.Lock.Exit();
         }
+    }
+
+    private async void SaveDocument(DocumentSynchronization documentSynchronization)
+    {
+        var operations = documentSynchronization.OperationsWithVersion();
+        documentSynchronization.Clear();
+
+        static ChangeType OperationTypeToChangeType(OperationType operationType)
+        {
+            return operationType switch
+            {
+                OperationType.Insert => ChangeType.Add,
+                OperationType.Delete => ChangeType.Delete,
+                _ => throw new ArgumentException(nameof(operationType))
+            };
+        }
+
+        var changes = new List<Change>(operations.Count);
+        foreach (var opv in operations)
+        {
+            var op = opv.Operation;
+            var change = new Change(op.UserID, op.Pos, op.Text, OperationTypeToChangeType(op.Type), opv.Version);
+            changes.Add(change);
+        }
+
+        await changesRepository.AddChangesAsync(changes);
     }
 }

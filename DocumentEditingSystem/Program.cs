@@ -16,7 +16,6 @@ using System.Net.NetworkInformation;
 using MediatR.Pipeline;
 using MediatR;
 using API.Hubs;
-using OperationalTransformation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,7 +83,6 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
 builder.Services.AddScoped<IDocumentManagementRepository, DocumentManagementRepository>();
 builder.Services.AddScoped<IDocumentEditingRepository, DocumentEditingRepository>();
-builder.Services.AddSingleton<SynchronizationSystem>();
 
 builder.Services.AddMediatR(cfg =>
 {
