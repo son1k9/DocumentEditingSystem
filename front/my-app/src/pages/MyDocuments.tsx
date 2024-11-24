@@ -28,6 +28,7 @@ const MyDocuments: React.FC = () => {
   const [documentContent, setDocumentContent] = useState('');
   const [currentVersion, setCurrentVersion] = useState<number>(0);
   const [operationsQueue, setOperationsQueue] = useState<Operation[]>([]);
+  const [activeOperation, setActiveOperation] = useState<Operation | null>(null);
   const activeDocumentIdRef = useRef<number | null>(null);
   const { isOpen, openModal, closeModal } = useModal();
   const [formType, setFormType] = useState<'add' | 'update' | 'delete' | null>(null);
@@ -88,6 +89,7 @@ const MyDocuments: React.FC = () => {
       newConnection.on('JoinedDocument', (operations : Operation[], version : number, joinedDocumentId) => {
 
         for (const operation of operations){
+          console.log('Get join op', operation)
           setDocumentContent((prevContent) => applyOperationToContent(prevContent, operation));
           setCurrentVersion(version);
         }
@@ -96,13 +98,12 @@ const MyDocuments: React.FC = () => {
       });
 
       newConnection.on('ReceivedOperation', (operation: Operation, version: number) => {
-        console.log('Received operation:', operation, 'Version:', version);
+        console.log('op rec', operation, version);
         handleReceivedOperation(operation, version);
       });
 
       newConnection.on('ReceivedAcknowledge', (nextVersion: number) => {
-        console.log('Acknowledged version:', nextVersion);
-        setCurrentVersion(nextVersion);
+        handleAcknowledge(nextVersion);
       });
 
       try {
@@ -153,24 +154,6 @@ const MyDocuments: React.FC = () => {
     setOperationsQueue((prevOps) => [...prevOps, ...operations]);
   };
 
-  useEffect(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-
-    timerRef.current = setTimeout(() => {
-      if (operationsQueue.length > 0) {
-        sendChanges(operationsQueue);
-      }
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [operationsQueue]);
-
   const detectOperations = (oldContent: string, newContent: string) => {
     const operations: Operation[] = [];
   
@@ -203,20 +186,28 @@ const MyDocuments: React.FC = () => {
     return operations;
   };
 
-  const sendChanges = async (operations: Operation[]) => {
-    if (connection && operations.length > 0 && activeDocumentIdRef.current) {
-      try {
-        const currentQueue = [...operations];
-        setOperationsQueue([]);
-  
-        for (const operation of currentQueue) {
-          console.log('Sending operation with version:', operation);
+  const sendOperation = async () => {
+    if (!activeOperation && operationsQueue.length > 0 && connection && activeDocumentIdRef.current) {
+      const operation = operationsQueue[0];
+      setActiveOperation(operation);
+      setOperationsQueue((prev) => prev.slice(1));
+      console.error('Unknown operation type');
+
+      setTimeout(async () => {
+        try {
           await connection.invoke('SendOperation', operation, currentVersion);
+          console.log('Operation sent:', operation, currentVersion);
+        } catch (err) {
+          console.error('Error sending operation:', err);
         }
-      } catch (err) {
-        console.error('Error sending changes:', err);
-      }
+      }, 500);
     }
+  };
+
+  const handleAcknowledge = (nextVersion: number) => {
+    setActiveOperation(null);
+    setCurrentVersion(nextVersion);
+    sendOperation();
   };
 
   const handleReceivedOperation = (operation: Operation, version: number) => {
@@ -235,6 +226,7 @@ const MyDocuments: React.FC = () => {
     setCurrentVersion(version);
 };
 
+
   const applyOperationToContent = (content: string, operation: Operation): string => {
     switch (operation.type) {
       case OperationType.Insert:
@@ -246,6 +238,12 @@ const MyDocuments: React.FC = () => {
         return content;
     }
   };
+
+  useEffect(() => {
+    if (!activeOperation) {
+      sendOperation();
+    }
+  }, [operationsQueue, activeOperation]);
 
   return (
     <div className="flex-1 flex overflow-hidden min-h-[calc(100vh-120px)]">
