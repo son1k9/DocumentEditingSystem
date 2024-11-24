@@ -13,15 +13,22 @@ import DeleteDocumentForm from '../forms/DeleteDocumentForm';
 
 const dmp = new diff_match_patch();
 
+const mockDocument = {
+  id: 1,
+  documentName: "text",
+  text: '',
+  ownerId: 1
+}
+
 const MyDocuments: React.FC = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const [activeDocumentId, setActiveDocumentId] = useState<number | null>(null);
   const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
   const [documentContent, setDocumentContent] = useState('');
   const [currentVersion, setCurrentVersion] = useState<number>(0);
   const [operationsQueue, setOperationsQueue] = useState<Operation[]>([]);
-  const activeDocumentIdRef = useRef<string | null>(null);
+  const activeDocumentIdRef = useRef<number | null>(null);
   const { isOpen, openModal, closeModal } = useModal();
   const [formType, setFormType] = useState<'add' | 'update' | 'delete' | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
@@ -51,7 +58,7 @@ const MyDocuments: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchDocuments = async () => {
+    /*const fetchDocuments = async () => {
       try{
         if (user?.user.id){
           const fetchDocuments = await getDocumentsForUser();
@@ -64,8 +71,9 @@ const MyDocuments: React.FC = () => {
       }
     }
 
-    fetchDocuments();
+    fetchDocuments();*/
 
+    setDocuments([mockDocument]);
   }, [user]);
 
   useEffect(() => {
@@ -129,8 +137,8 @@ const MyDocuments: React.FC = () => {
     }
   }, [activeDocumentId, connection]);
 
-  const handleDocumentSelect = (documentId: string) => {
-    const selectedDocument = documents.find((doc) => doc.id.toString() === documentId);
+  const handleDocumentSelect = (documentId: number) => {
+    const selectedDocument = documents.find((doc) => doc.id === documentId);
     setActiveDocumentId(documentId);
     setDocumentContent(selectedDocument?.text || '');
     console.log('Selected document:', documentId, selectedDocument);
@@ -261,11 +269,11 @@ const MyDocuments: React.FC = () => {
             <li
               key={doc.id}
               className={`p-2 bg-white hover:bg-gray-200 cursor-pointer border rounded ${
-                activeDocumentId === doc?.id?.toString() ? 'bg-gray-200' : ''
+                activeDocumentId === doc?.id ? 'bg-gray-200' : ''
               }`}
             >
               <div className="flex justify-between items-center">
-                <span onClick={() => handleDocumentSelect(doc.id.toString())}>
+                <span onClick={() => handleDocumentSelect(doc.id)}>
                   {doc.documentName}
                 </span>
                   <button
