@@ -13,13 +13,6 @@ import DeleteDocumentForm from '../forms/DeleteDocumentForm';
 
 const dmp = new diff_match_patch();
 
-const mockDocument = {
-  id: 1,
-  documentName: "text",
-  text: '',
-  ownerId: 1
-}
-
 const MyDocuments: React.FC = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -59,7 +52,7 @@ const MyDocuments: React.FC = () => {
   };
 
   useEffect(() => {
-    /*const fetchDocuments = async () => {
+    const fetchDocuments = async () => {
       try{
         if (user?.user.id){
           const fetchDocuments = await getDocumentsForUser();
@@ -72,9 +65,7 @@ const MyDocuments: React.FC = () => {
       }
     }
 
-    fetchDocuments();*/
-
-    setDocuments([mockDocument]);
+    fetchDocuments();
   }, [user]);
 
   useEffect(() => {
