@@ -103,6 +103,7 @@ const MyDocuments: React.FC = () => {
       });
 
       newConnection.on('ReceivedAcknowledge', (nextVersion: number) => {
+        console.log('rec ack', nextVersion);
         handleAcknowledge(nextVersion);
       });
 
@@ -191,16 +192,14 @@ const MyDocuments: React.FC = () => {
       const operation = operationsQueue[0];
       setActiveOperation(operation);
       setOperationsQueue((prev) => prev.slice(1));
-      console.error('Unknown operation type');
 
-      setTimeout(async () => {
         try {
           await connection.invoke('SendOperation', operation, currentVersion);
           console.log('Operation sent:', operation, currentVersion);
         } catch (err) {
           console.error('Error sending operation:', err);
         }
-      }, 500);
+
     }
   };
 
