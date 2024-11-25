@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace OperationalTransformation;
 
@@ -13,7 +14,7 @@ public class DocumentSynchronization(int documentID, int version)
     public int DocumentID { get; } = documentID;
 
     readonly List<int> operationVersions = [];
-    readonly List<Operation> operations = [];
+    List<Operation> operations = [];
     readonly Dictionary<int, int> versionToIndex = [];
 
     // This should always be equal to last operation version + 1
@@ -49,7 +50,6 @@ public class DocumentSynchronization(int documentID, int version)
         Debug.Assert(operation.Type != OperationType.None);
         Debug.Assert(version <= DocumentVersion);
 
-
         // TODO: Test this
         if (version < StartVersion)
         {
@@ -82,5 +82,30 @@ public class DocumentSynchronization(int documentID, int version)
         operations.Add(operation);
         versionToIndex[DocumentVersion++] = operations.Count - 1;
         return (operation, DocumentVersion);
+    }
+
+    public static string UpdateDocument(string text, IEnumerable<Operation> operations)
+    {
+        static void ApplyOperation(List<char> text, Operation op)
+        {
+            if (op.Type == OperationType.Insert)
+            {
+                text.InsertRange(op.Pos, [.. op.Text]);
+            }
+
+            if (op.Type == OperationType.Delete)
+            {
+                text.RemoveRange(op.Pos, op.Text.Length);
+            }
+        }
+
+        var textList = new List<char>(text);
+
+        foreach(var op in operations)
+        {
+            ApplyOperation(textList, op);
+        }
+
+        return new string(CollectionsMarshal.AsSpan(textList));
     }
 }

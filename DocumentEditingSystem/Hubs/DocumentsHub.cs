@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.SignalR;
 using OperationalTransformation;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace API.Hubs;
 
@@ -65,7 +66,15 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
 
                 Debug.Assert(document != null);
 
-                await SaveDocument(document.Document);
+                await document.Lock.EnterAsync();
+                try
+                {
+                    await SaveDocument(document.Document, documentID);
+                }
+                finally
+                {
+                    document.Lock.Exit();
+                }
 
                 logger.LogInformation("No connection left in group {documentID}. Group was removed", documentID);
             }
@@ -144,10 +153,9 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         }
     }
 
-    private async Task SaveDocument(DocumentSynchronization documentSynchronization)
+    private async Task SaveDocument(DocumentSynchronization documentSynchronization, int documentID)
     {
         var operations = documentSynchronization.OperationsWithVersion();
-        documentSynchronization.Clear();
 
         static ChangeType OperationTypeToChangeType(OperationType operationType)
         {
@@ -163,10 +171,24 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         foreach (var opv in operations)
         {
             var op = opv.Operation;
-            var change = new Change(op.UserID, op.Pos, op.Text, OperationTypeToChangeType(op.Type), opv.Version);
+            var change = new Change(op.UserID, documentID, op.Pos, op.Text, OperationTypeToChangeType(op.Type), opv.Version);
             changes.Add(change);
         }
 
+        var document = await documentsRepository.GetDocumentByIdAsync(documentID);
+        if (document == null)
+        {
+            logger.LogInformation("Failed to save document with ID:{documentID}. Document does not exist.", documentID);
+            return;
+        }
+
         await changesRepository.AddChangesAsync(changes);
+
+        var newText = DocumentSynchronization.UpdateDocument(document.Text, documentSynchronization.Operations);
+        
+        document.UpdateDocument(newText);
+        await documentsRepository.UpdateDocumentAsync(document);
+
+        documentSynchronization.Clear();
     }
 }

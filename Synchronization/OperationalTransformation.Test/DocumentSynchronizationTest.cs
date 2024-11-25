@@ -110,11 +110,7 @@ public class DocumentSynchronizationTest
         SimulateCommunication(clients, syncSystem);
         SimulateCommunication(clients, syncSystem);
 
-        string result = "";
-        foreach (var op in syncSystem.Operations)
-        {
-            result = result.ApplyOp(op);
-        }
+        string result = DocumentSynchronization.UpdateDocument("", syncSystem.Operations);
 
         Assert.Equal(client1.Document, client2.Document);
         Assert.Equal(client2.Document, client3.Document);
