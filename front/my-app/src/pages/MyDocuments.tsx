@@ -13,6 +13,13 @@ import DeleteDocumentForm from '../forms/DeleteDocumentForm';
 
 const dmp = new diff_match_patch();
 
+const mockDocument = {
+  id : 1,
+  documentName: "text",
+  text: "",
+  ownerId: 1
+}
+
 const MyDocuments: React.FC = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -27,6 +34,16 @@ const MyDocuments: React.FC = () => {
   const [formType, setFormType] = useState<'add' | 'update' | 'delete' | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentVersionRef = useRef(currentVersion);
+  const operationsQueueRef = useRef(operationsQueue);
+
+  useEffect( () => {
+    currentVersionRef.current = currentVersion;
+  }, [currentVersion]);
+
+  useEffect( () => {
+    operationsQueueRef.current = [...operationsQueue];
+  }, [operationsQueue]);
 
   const openDocumentModal = (document: Document | null, type: 'add' | 'update' | 'delete') => {
     setSelectedDocument(document);
@@ -52,7 +69,7 @@ const MyDocuments: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchDocuments = async () => {
+    /*const fetchDocuments = async () => {
       try{
         if (user?.user.id){
           const fetchDocuments = await getDocumentsForUser();
@@ -65,7 +82,10 @@ const MyDocuments: React.FC = () => {
       }
     }
 
-    fetchDocuments();
+    fetchDocuments();*/
+
+    setDocuments([mockDocument]);
+
   }, [user]);
 
   useEffect(() => {
@@ -179,8 +199,8 @@ const MyDocuments: React.FC = () => {
   };
 
   const sendOperation = async () => {
-    if (!activeOperation && operationsQueue.length > 0 && connection && activeDocumentIdRef.current) {
-      const operation = operationsQueue[0];
+    if (!activeOperation && operationsQueueRef.current.length > 0 && connection && activeDocumentIdRef.current) {
+      const operation = operationsQueueRef.current[0];
       setActiveOperation(operation);
       setOperationsQueue((prev) => prev.slice(1));
 
@@ -201,16 +221,19 @@ const MyDocuments: React.FC = () => {
   };
 
   const handleReceivedOperation = (operation: Operation, version: number) => {
-    if (version < currentVersion){
+    if (version < currentVersionRef.current){
       return;
     }
 
     const oldOp = new Operation(operation.Type, operation.Pos, operation.Text, operation.UserID);
+    
 
-    for (let i = 0; i < operationsQueue.length; i++){
-      operation = operation.transform(operationsQueue[i], true);
-      operationsQueue[i] = operationsQueue[i].transform(oldOp);
+    for (let i = 0; i < operationsQueueRef.current.length; i++) {
+      operation = operation.transform(operationsQueueRef.current[i], true);
+      operationsQueueRef.current[i] = operationsQueueRef.current[i].transform(oldOp);
     }
+
+    setOperationsQueue([...operationsQueueRef.current]);
 
     setDocumentContent((prevContent) => applyOperationToContent(prevContent, operation));
     setCurrentVersion(version);

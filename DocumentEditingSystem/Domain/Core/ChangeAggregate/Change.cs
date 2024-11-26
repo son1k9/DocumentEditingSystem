@@ -14,7 +14,11 @@ namespace API.Domain.Core.DocumentAggregate
         public int Version { get; private set; }
         public DateTime Date {  get; private set; }
 
-		public Change(int editorId, int documentID, int changePosition, string text, ChangeType changeType, int version)
+        public Change()
+        {
+            
+        }
+        public Change(int editorId, int documentID, int changePosition, string text, ChangeType changeType, int version)
 		{
 			DocumentId = documentID;
 			EditorId = editorId;
