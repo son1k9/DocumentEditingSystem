@@ -202,7 +202,6 @@ const MyDocuments: React.FC = () => {
     if (!activeOperation && operationsQueueRef.current.length > 0 && connection && activeDocumentIdRef.current) {
       const operation = operationsQueueRef.current[0];
       setActiveOperation(operation);
-      setOperationsQueue((prev) => prev.slice(1));
 
         try {
           await connection.invoke('SendOperation', operation, currentVersion);
@@ -217,6 +216,7 @@ const MyDocuments: React.FC = () => {
   const handleAcknowledge = (nextVersion: number) => {
     setActiveOperation(null);
     setCurrentVersion(nextVersion);
+    setOperationsQueue((prev) => prev.slice(1));
     sendOperation();
   };
 
