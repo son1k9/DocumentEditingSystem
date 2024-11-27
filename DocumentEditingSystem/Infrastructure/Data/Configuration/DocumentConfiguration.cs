@@ -15,8 +15,12 @@ namespace API.Infrastructure.Data.Configuration
 
 			builder.HasOne<User>().WithMany().HasForeignKey(p => p.OwnerId);
 
+            builder.HasMany(p => p.Editors)
+				.WithMany()
+				.UsingEntity(j => j.ToTable("DocumentEditors"));
 
-			builder.OwnsOne(p => p.DocumentName, a =>
+
+            builder.OwnsOne(p => p.DocumentName, a =>
 			{
 				a.Property(u => u.Value).HasColumnName("DocumentName");
 				a.Property(u => u.Value).HasColumnType("varchar");

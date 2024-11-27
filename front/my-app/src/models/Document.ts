@@ -3,4 +3,5 @@ export interface Document {
     documentName: string;
     text: string;
     ownerId: number;
+    editors: string[];
   }

@@ -1,5 +1,6 @@
 ﻿using API.Domain.ValueObjects;
 using API.Domain.ValueObjects.Enums;
+using Domain.UserManagement.UserAggregate;
 using MediatR;
 
 namespace API.Domain.DocumentManagement.DocumentAggregate
@@ -12,6 +13,7 @@ namespace API.Domain.DocumentManagement.DocumentAggregate
 		public DateTime CreationDate { get; private set; }
 		public DateTime ChangingDate { get; private set; }
 		public int OwnerId { get; private set; }
+		public ICollection<User> Editors { get; private set; } = [];
 
 		public Document(DocumentName documentName, string text)
 		{
@@ -25,6 +27,11 @@ namespace API.Domain.DocumentManagement.DocumentAggregate
 		public void SetOwnerId(int ownerId)
 		{
 			OwnerId = ownerId;
+		}
+
+		public void SetEditors(ICollection<User> editors)
+		{
+			Editors = editors;
 		}
 
 		public void UpdateDocument(string text)

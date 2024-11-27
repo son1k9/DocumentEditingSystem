@@ -1,24 +1,24 @@
 ﻿using API.Domain.DocumentManagement.DocumentAggregate;
 using API.Domain.ValueObjects;
-using API.Domain.ValueObjects.Enums;
 using API.Dtos.Read;
 using API.Dtos.Write;
 using API.Infrastructure.Repositories.Interfaces;
 using API.Infrastructure.Services.Interfaces;
 using API.Mappers;
-using Microsoft.AspNetCore.Mvc;
-using System.Text;
-using static System.Net.Mime.MediaTypeNames;
+using Domain.UserManagement.UserAggregate;
+
 
 namespace API.Infrastructure.Services.Implementations
 {
     public class DocumentManagementService : IDocumentManagementService
     {
         private readonly IDocumentManagementRepository _documentManagementRepository;
+        private readonly IUserRepository _userRepository;
 
-        public DocumentManagementService(IDocumentManagementRepository documentManagementRepository)
+        public DocumentManagementService(IDocumentManagementRepository documentManagementRepository, IUserRepository userRepository)
         {
             _documentManagementRepository = documentManagementRepository;
+            _userRepository = userRepository;
         }
 
 		public async Task DeleteDocument(int documentId, int userId)
@@ -105,6 +105,60 @@ namespace API.Infrastructure.Services.Implementations
             }
 
             return DocumentMapper.DocumentToDto(document);
+        }
+
+        public async Task<bool> UpdateDocumentEditors(int userId, int documentId, ICollection<string> usernames)
+        {
+            Document document = await _documentManagementRepository.GetDocumentByIdAsync(documentId);
+
+            if (document == null)
+            {
+                return false;
+            }
+
+            if (document.OwnerId != userId)
+            {
+                return false;
+            }
+
+            List<User> editors = [];
+
+            foreach(var user in usernames)
+            {
+                var editor = await _userRepository.GetByUsernameAsync(user);
+
+                if (editor != null)
+                {
+                    editors.Add(editor);
+                }
+            }
+
+            document.SetEditors(editors);
+
+            return await _documentManagementRepository.UpdateDocumentAsync(document);
+        }
+
+        public async Task<bool> DeleteDocumentFromEditor(int userId, int documentId)
+        {
+            Document document = await _documentManagementRepository.GetDocumentByIdAsync(documentId);
+
+            if (document == null)
+            {
+                return false;
+            }
+
+            var editor = await _userRepository.GetByIdAsync(userId);
+
+            if (!document.Editors.Contains(editor))
+            {
+                return false;
+            }
+
+            var newEditors = document.Editors.Where(e => e.Id != editor.Id).ToList();
+
+            document.SetEditors(newEditors);
+
+            return await _documentManagementRepository.UpdateDocumentAsync(document);
         }
     }
 }

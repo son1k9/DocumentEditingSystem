@@ -28,8 +28,27 @@ export const addDocument = async (formData: FormData): Promise<void> => {
   }
 };
 
-export const updateDocument = async (documentId: number): Promise<void> =>{
-  throw new Error();
+export const updateDocumentEditors = async (documentId: number, editors: string[]): Promise<void> =>{
+  try {
+    const params = new URLSearchParams();
+    editors.forEach((editor) => params.append('editors', editor));
+
+    const response = await apiClient.patch(`/Documents/updateEditors/${documentId}?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при обновлении документа:', error);
+    throw new Error('Ошибка при обновлении документа');
+  }
+}
+
+export const deleteFromEditor = async (documentId: number): Promise<void> =>{
+  try {
+    const response = await apiClient.patch(`/Documents/deleteFromEditor/${documentId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при обновлении документа:', error);
+    throw new Error('Ошибка при обновлении документа');
+  }
 }
 
 export const deleteDocument = async (documentId: number): Promise<void> =>{

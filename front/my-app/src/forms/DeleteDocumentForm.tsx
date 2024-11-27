@@ -1,5 +1,5 @@
 import React from 'react';
-import { updateDocument } from '../services/documentService';
+import { deleteFromEditor} from '../services/documentService';
 
 interface DeleteDocumentFormProps {
   documentId: number;
@@ -14,7 +14,7 @@ const DeleteDocumentForm: React.FC<DeleteDocumentFormProps> = ({
 }) => {
   const handleDelete = async () => {
     try {
-      await updateDocument(documentId);
+      await deleteFromEditor(documentId);
       refreshDocuments();
       closeModal();
     } catch (error) {

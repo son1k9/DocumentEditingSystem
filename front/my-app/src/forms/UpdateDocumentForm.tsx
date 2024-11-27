@@ -1,27 +1,31 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { updateDocument, deleteDocument } from '../services/documentService';
+import { updateDocumentEditors, deleteDocument } from '../services/documentService';
 
 interface UpdateDocumentFormProps {
   documentId: number;
-//  currentEditors: string[];
+  editors: string[];
   closeModal: () => void;
   refreshDocuments: () => void;
 }
 
 const UpdateDocumentForm: React.FC<UpdateDocumentFormProps> = ({
   documentId,
-//  currentEditors,
+  editors,
   closeModal,
   refreshDocuments,
 }) => {
-  const { register, handleSubmit, reset } = useForm<{ editors: string[] }>();
+  const { register, handleSubmit, reset } = useForm<{ editors: string }>({
+    defaultValues: { editors: editors.join(',') },
+  });
 
-  const onSubmit = async (data: { editors: string[] }) => {
+  const onSubmit = async (data: { editors: string }) => {
     try {
-      await updateDocument(documentId);
+      const editorArray = data.editors.split(',').map((e) => e.trim());
+      await updateDocumentEditors(documentId, editorArray);
       refreshDocuments();
       closeModal();
+      reset();
     } catch (error) {
       console.error('Error updating editors:', error);
     }
@@ -41,20 +45,23 @@ const UpdateDocumentForm: React.FC<UpdateDocumentFormProps> = ({
     <div className="p-4 bg-white rounded shadow-lg">
       <h2 className="text-xl font-bold mb-4">Управление документом</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Редакторы (Usernames)
-          </label>
-        </div>
-        <div className="flex justify-between">
-          <button type="submit" className="btn-primary">
-            Обновить редакторов
-          </button>
-          <button type="button" onClick={handleDelete} className="btn-danger">
-            Удалить документ
-          </button>
-        </div>
-      </form>
+      <label>Редакторы (Username через запятую):</label>
+      <input className='w-[90%]'
+        {...register('editors')}
+        placeholder="Введите ID редакторов через запятую"
+        defaultValue={editors.join(',')}
+      />
+      <br></br>
+      <button type="submit">Обновить</button>
+      <br></br>
+      <button type="button" onClick={closeModal}>
+        Отмена
+      </button>
+      <br></br>
+      <button type="button" onClick={handleDelete}>
+        Удалить документ
+      </button>
+    </form>
     </div>
   );
 };

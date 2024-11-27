@@ -1,4 +1,5 @@
 ﻿using API.Domain.DocumentManagement.DocumentAggregate;
+using Domain.UserManagement.UserAggregate;
 
 namespace API.Infrastructure.Repositories.Interfaces
 {
@@ -12,6 +13,6 @@ namespace API.Infrastructure.Repositories.Interfaces
 
 		Task<Document?> GetDocumentByIdAsync(int id);
 
-		Task<List<Document>> GetAvailableDocumentsAsync(int managerId);
+		Task<List<Document>> GetAvailableDocumentsAsync(int userId);
 	}
 }

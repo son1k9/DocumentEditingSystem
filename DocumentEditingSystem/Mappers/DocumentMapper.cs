@@ -21,7 +21,8 @@ namespace API.Mappers
 				Id = document.Id,
 				DocumentName = document.DocumentName.Value,
 				Text = document.Text,
-				OwnerId = document.OwnerId
+				OwnerId = document.OwnerId,
+				Editors = document.Editors.Select(x => x.Username.Value).ToList()
 			};
 
 			return documentR;

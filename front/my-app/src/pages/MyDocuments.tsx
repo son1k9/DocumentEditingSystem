@@ -10,15 +10,7 @@ import AddDocumentForm from '../forms/AddDocumentForm';
 import UpdateDocumentForm from '../forms/UpdateDocumentForm';
 import DeleteDocumentForm from '../forms/DeleteDocumentForm';
 
-
 const dmp = new diff_match_patch();
-
-const mockDocument = {
-  id : 1,
-  documentName: "text",
-  text: "",
-  ownerId: 1
-}
 
 const MyDocuments: React.FC = () => {
   const { user } = useAuth();
@@ -33,7 +25,6 @@ const MyDocuments: React.FC = () => {
   const { isOpen, openModal, closeModal } = useModal();
   const [formType, setFormType] = useState<'add' | 'update' | 'delete' | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentVersionRef = useRef(currentVersion);
   const operationsQueueRef = useRef(operationsQueue);
 
@@ -69,7 +60,7 @@ const MyDocuments: React.FC = () => {
   };
 
   useEffect(() => {
-    /*const fetchDocuments = async () => {
+    const fetchDocuments = async () => {
       try{
         if (user?.user.id){
           const fetchDocuments = await getDocumentsForUser();
@@ -82,9 +73,7 @@ const MyDocuments: React.FC = () => {
       }
     }
 
-    fetchDocuments();*/
-
-    setDocuments([mockDocument]);
+    fetchDocuments();
 
   }, [user]);
 
@@ -320,7 +309,7 @@ const MyDocuments: React.FC = () => {
           <div className="modal-content">
             <UpdateDocumentForm
               documentId={selectedDocument.id}
-              //currentEditors={selectedDocument.editors.map((e) => e.username)}
+              editors={selectedDocument.editors.map((editor) => editor.toString())}
               closeModal={closeModal}
               refreshDocuments={refreshDocuments}
             />

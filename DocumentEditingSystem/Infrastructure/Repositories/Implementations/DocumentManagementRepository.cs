@@ -1,6 +1,7 @@
 ﻿using API.Domain.DocumentManagement.DocumentAggregate;
 using API.Infrastructure.Data;
 using API.Infrastructure.Repositories.Interfaces;
+using Domain.UserManagement.UserAggregate;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,14 +54,14 @@ namespace API.Infrastructure.Repositories.Implementations
 			return await SaveAsync();
 		}
 
-		public async Task<List<Document>> GetAvailableDocumentsAsync(int ownerId)
+		public async Task<List<Document>> GetAvailableDocumentsAsync(int userId)
 		{
-			return await _context.Documents.Where(p => p.OwnerId == ownerId).ToListAsync();
+			return await _context.Documents.Where(p => p.OwnerId == userId || p.Editors.Any(e => e.Id == userId)).Include(u => u.Editors).ToListAsync();
 		}
 
 		public async Task<Document?> GetDocumentByIdAsync(int documentId)
 		{
-			return await _context.Documents.FirstOrDefaultAsync(x => x.Id == documentId);
+			return await _context.Documents.Include(u => u.Editors).FirstOrDefaultAsync(x => x.Id == documentId);
 		}
-	}
+    }
 }

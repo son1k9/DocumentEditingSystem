@@ -27,7 +27,7 @@ namespace API.Controllers
 		[Authorize]
 		public async Task<IResult> LoadDocument(IFormFile file)
 		{
-			if (file.ContentType != "text/plain"){
+			if (file.ContentType != "text/plain") {
 				return Results.BadRequest("File type is incorrect");
 			}
 
@@ -45,7 +45,7 @@ namespace API.Controllers
 			}
 
 			return Results.Ok();
-			
+
 		}
 
 		// [HttpPost("UpdateDocument")]
@@ -99,5 +99,33 @@ namespace API.Controllers
 
 			return Results.Ok(document);
 		}
-	}
+
+		[HttpPatch("updateEditors/{id}")]
+		[Authorize]
+		public async Task<IResult> UpdateDocumentEditors(int id, [FromQuery] List<string> editors)
+		{
+            int userId = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+			if (!await _documentManagementService.UpdateDocumentEditors(userId, id, editors))
+			{
+				return Results.BadRequest();
+			}
+
+			return Results.Ok();
+        }
+
+        [HttpPatch("deleteFromEditor/{id}")]
+        [Authorize]
+        public async Task<IResult> UpdateDocumentEditors(int id)
+        {
+            int userId = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+            if (!await _documentManagementService.DeleteDocumentFromEditor(userId, id))
+            {
+                return Results.BadRequest();
+            }
+
+            return Results.Ok();
+        }
+    }
 }
