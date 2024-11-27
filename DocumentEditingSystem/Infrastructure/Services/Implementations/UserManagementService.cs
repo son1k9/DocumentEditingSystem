@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace API.Infrastructure.Services.Implementations
@@ -24,11 +25,10 @@ namespace API.Infrastructure.Services.Implementations
             _userRepository = userRepository;
         }
 
-        private string GenerateToken(Username username, int userId, Role role)
+        private string GenerateAccessToken(Username username, int userId)
         {
 			var claims = new List<Claim> {
                 new Claim(ClaimsIdentity.DefaultNameClaimType, username.Value ),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, role.ToString()),
 				new Claim(ClaimTypes.NameIdentifier, userId.ToString())
 			};
 
@@ -44,14 +44,22 @@ namespace API.Infrastructure.Services.Implementations
 				issuer: AuthOptions.ISSUER,
 				audience: AuthOptions.AUDIENCE,
 				claims: claimsIdentity.Claims,
-				expires: DateTime.UtcNow.Add(TimeSpan.FromDays(30)),
+				expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(5)),
 				signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
             var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
 
             return encodedJwt;
 		}
 
-        public async Task<string> Autorize(Username username, Password password)
+        private string GenerateRefreshToken()
+        {
+            var refreshToken = new byte[64];
+            var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(refreshToken);
+            return Convert.ToBase64String(refreshToken);
+        }
+
+        public async Task<Token> Autorize(Username username, Password password)
         {
             User user = await _userRepository.GetByUsernameAsync(username.Value);
 			
@@ -67,8 +75,21 @@ namespace API.Infrastructure.Services.Implementations
                 throw new ArgumentException("Invalid login or password!");
             }
 
-            var jwt = GenerateToken(username, user.Id, user.Role);
-            return jwt;
+            var jwt = GenerateAccessToken(username, user.Id);
+            var refreshToken = GenerateRefreshToken();
+            user.SetRefreshToken(new RefreshToken(refreshToken));
+            result = await _userRepository.UpdateAsync(user);
+
+            if (!result)
+            {
+                throw new Exception("Failed to install refresh token");
+            }
+
+            return new Token
+            {
+                AccessToken = jwt,
+                RefreshToken = refreshToken,
+            };
 		}
 
         public async Task<UserR> ChangeName(Name name, Username username)
@@ -150,10 +171,7 @@ namespace API.Infrastructure.Services.Implementations
 			user.ChangePhoneNumber(newNumber);
 			bool result = await _userRepository.UpdateAsync(user);
 
-			if (!result)
-			{
-				throw new Exception("An error occurred updating the data");
-			}
+			if (!result) throw new Exception("An error occurred updating the data");
 
 			return UserMapper.UserToDto(user);
 		}
@@ -170,7 +188,7 @@ namespace API.Infrastructure.Services.Implementations
             return userR;
         }
 
-		public async Task<string> Register(UserW userW)
+		public async Task<Token> Register(UserW userW)
 		{
 
             User user = await _userRepository.GetByUsernameAsync(userW.Username);
@@ -185,17 +203,56 @@ namespace API.Infrastructure.Services.Implementations
             if (result)
             {
 				
-				var jwt = GenerateToken(user.Username, user.Id, user.Role);
-				return jwt;
+				var jwt = GenerateAccessToken(user.Username, user.Id);
+                var refreshToken = GenerateRefreshToken();
+                user.SetRefreshToken(new RefreshToken(refreshToken));
+                result = await _userRepository.UpdateAsync(user); 
+
+                if (!result) throw new Exception("Failed to install refresh token");
+
+				return new Token
+                {
+                    AccessToken = jwt,
+                    RefreshToken = refreshToken
+                };
 			}
 
             throw new Exception("Error adding a user");
 
 		}
 
-		public void Unautorize()
+		public async Task<bool> Unautorize(Username username)
         {
-            throw new NotImplementedException();
+            User user = await _userRepository.GetByUsernameAsync(username.Value);
+            if (user == null) return false;
+
+            user.BlockRefreshToken();
+            var result = await _userRepository.UpdateAsync(user);
+            if (!result) return false;
+
+            return true;
         }
-    }
+
+		public async Task<string> GetAccessToken(Username username, string refreshToken)
+		{
+			User user = await _userRepository.GetByUsernameAsync(username.Value);
+
+            if (user == null)
+            {
+                throw new ArgumentException("User not found!");
+            }
+
+            var result = user.RefreshToken.ValidateToken(new RefreshToken(refreshToken));
+
+            if(!result)
+            {
+                throw new ArgumentException("Token is invalid!");
+            }
+
+            var jwt = GenerateAccessToken(user.Username, user.Id);
+
+            return jwt;
+
+		}
+	}
 }

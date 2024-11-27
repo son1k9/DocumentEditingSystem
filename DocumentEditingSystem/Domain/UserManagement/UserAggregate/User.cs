@@ -19,10 +19,9 @@ namespace Domain.UserManagement.UserAggregate
 		public Email Email { get; private set; }
 		public PhoneNumber PhoneNumber { get; private set; }
 		public Password Password { get; private set;  }
-		private JwtSecurityToken Token { get; set; }
-		public Role Role { get; private set;  }
+		public RefreshToken? RefreshToken { get; private set; }
 
-		public User(Name name, Username username, Email email, PhoneNumber phoneNumber, Password password, Role role)
+		public User(Name name, Username username, Email email, PhoneNumber phoneNumber, Password password)
 		{
 			if (name == null) throw new ArgumentNullException("Name cannot be null");
 			if (username == null) throw new ArgumentNullException("Username cannot be null");
@@ -30,13 +29,13 @@ namespace Domain.UserManagement.UserAggregate
 			if (phoneNumber == null) throw new ArgumentNullException("Phone number cannot be null");
 			if (password == null) throw new ArgumentNullException("Password cannot be null");
 			
+			
 
 			Name = name;
 			Username = username;
 			Email = email;
 			PhoneNumber = phoneNumber;
 			Password = password;
-			Role = role;
 		}
 
 		public void ChangeName(Name name)
@@ -64,22 +63,16 @@ namespace Domain.UserManagement.UserAggregate
 			Password = password;
 		}
 
-		public void ChangeRole(Role role)
+		public void SetRefreshToken(RefreshToken refreshToken)
 		{
-			if (Role == role) throw new ArgumentException("User already has this role");
-			Role = role;
+			RefreshToken = refreshToken;
 		}
 
-		public void SetToken(JwtSecurityToken token)
+		public void BlockRefreshToken()
 		{
-			if (token == null) throw new ArgumentNullException("Token cannot be null");
-			Token = token;
+			RefreshToken.BlockToken();
 		}
 
-		public bool ValidateToken(JwtSecurityToken token)
-		{
-			return Token == token;
-		}
 		private User() { }
 	}
 }

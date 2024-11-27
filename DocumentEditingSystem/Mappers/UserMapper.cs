@@ -15,7 +15,7 @@ namespace API.Mappers
 			PhoneNumber phoneNumber = new PhoneNumber(userW.PhoneNumber);
 			Username username = new Username(userW.Username);
 			Password password = new Password(userW.Password);
-			User user = new User(name, username, email, phoneNumber, password, Role.User);
+			User user = new User(name, username, email, phoneNumber, password);
 			return user;
 		}
 

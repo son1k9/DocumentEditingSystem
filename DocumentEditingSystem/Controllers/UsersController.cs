@@ -2,6 +2,7 @@
 using API.Dtos.Read;
 using API.Dtos.Write;
 using API.Infrastructure.Services.Interfaces;
+using API.TokenConfig;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -28,8 +29,8 @@ namespace DocumentEditingSystem.Controllers
 			{
 				Username name = new Username(username);
 				Password pwd = new Password(password);
-				var jwt = _userManagementService.Autorize(name, pwd);
-				var response = new { access_token = jwt, username = username };
+				var token = _userManagementService.Autorize(name, pwd);
+				var response = new { access_token = token.Result.AccessToken, refresh_token = token.Result.RefreshToken, username = username };
 				return Results.Json(response);
 			}
 			catch (ArgumentException ex)
@@ -43,13 +44,34 @@ namespace DocumentEditingSystem.Controllers
 			
 		}
 
+		[HttpPost("GetAccessToken")]
+		public async Task<IResult> GetAccessToken(string refreshToken, string username)
+		{
+			try
+			{
+				Username name = new Username(username);
+				var jwt = await _userManagementService.GetAccessToken(name, refreshToken);
+				var response = new { access_token = jwt, username = username };
+				return Results.Json(response);
+			}
+			catch (ArgumentException ex)
+			{
+				return Results.BadRequest(ex.Message);
+			}
+			catch (Exception ex)
+			{
+				return Results.Problem(ex.Message);
+			}
+
+		}
+
 		[HttpPost("Register")]
 		public async Task<IResult> Register(UserW user)
 		{
 			try
 			{
-				var jwt = await _userManagementService.Register(user);
-				var response = new { access_token = jwt, username = user.Username };
+				var token = await _userManagementService.Register(user);
+				var response = new { access_token = token.AccessToken, refresh_token = token.RefreshToken};
 				return Results.Json(response);
 			}
 			catch (ArgumentException ex)
@@ -176,6 +198,19 @@ namespace DocumentEditingSystem.Controllers
 			{
 				return Results.Problem(ex.Message);
 			}
+		}
+
+		[HttpPost("Unautorize")]
+		[Authorize]
+		public async Task<IResult> Unautorize()
+		{
+			string username = User.Identity.Name;
+			var result = await _userManagementService.Unautorize(new Username(username));
+
+			if (!result) return Results.Problem("Error during deauthentication");
+			return Results.Ok(result);
+
+			
 		}
 	}
 }

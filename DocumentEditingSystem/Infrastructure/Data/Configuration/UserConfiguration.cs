@@ -1,4 +1,5 @@
 ﻿using API.Domain.DocumentManagement.DocumentAggregate;
+using API.Domain.ValueObjects;
 using Domain.UserManagement.UserAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -12,6 +13,15 @@ namespace API.Infrastructure.Data.Configuration
 			builder.ToTable("Users");
 
 			builder.HasKey(p => p.Id);
+
+			builder.OwnsOne(p => p.RefreshToken, a =>
+			{
+				a.Property(u => u.Value).HasColumnName("RefreshToken");
+				a.Property(u => u.Value).HasColumnType("varchar");
+
+				a.Property(u => u.TokenIsBlocked).HasColumnName("TockenStatus");
+				a.Property(u => u.TokenIsBlocked).HasColumnType("bool");
+			});
 
 			builder.OwnsOne(p => p.Username, a =>
 			{
