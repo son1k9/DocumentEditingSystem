@@ -19,12 +19,10 @@ export interface LoginResponse {
 export const login = async (data: LoginInput): Promise<LoginResponse> => {
     try {
         const response = await apiClient.post(`/users/authorize?username=${data.username}&password=${data.password}`);
-        const { access_token, refreshToken, username } = response.data;
+        const { access_token, refresh_token, username } = response.data;
 
-        Cookies.set('token', access_token.result);
-        Cookies.set('refreshToken', refreshToken);
-
-        const authToken = `Bearer ${access_token.result}`;
+        Cookies.set('token', access_token);
+        Cookies.set('refreshToken', refresh_token);
 
         const userResponse = await apiClient.post("/users/userdata");
 
@@ -32,7 +30,7 @@ export const login = async (data: LoginInput): Promise<LoginResponse> => {
 
         Cookies.set("user", JSON.stringify(user));
 
-        return {access_token: access_token.result, refreshToken, user};
+        return {access_token: access_token, refreshToken: refresh_token, user};
     } 
     catch (error) 
     {
@@ -50,7 +48,13 @@ export const register = async (data: RegisterInput): Promise<void> => {
     }
 };
 
-export const logout = () => {
+export const logout = async () => {
+    try {
+        await apiClient.post(`users/Unautorize`);
+    } catch (error) {
+        console.error("Ошибка при выходе:", error);
+        throw new Error("Не удалось выйти. Попробуйте позже.");
+    }
     Cookies.remove('token');
     Cookies.remove('refreshToken');
     Cookies.remove('user');
