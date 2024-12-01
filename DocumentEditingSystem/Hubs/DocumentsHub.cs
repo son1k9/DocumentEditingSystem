@@ -102,6 +102,8 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
                 "Document does not exist.", connectionID, documentID);
 
             await Clients.Caller.SendAsync("JoinDocumentError", "Document does not exist");
+
+            return;
         }
 
         int userID = int.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -112,6 +114,8 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
                 "User does not have needed privileges.", connectionID, documentID);
 
             await Clients.Caller.SendAsync("JoinDocumentError", "User does not have needed privileges");
+
+            return;
         }
 
         var connectionAlreadyInGroup = !connectionGroup.TryAdd(connectionID, documentID);
@@ -162,6 +166,8 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         if (connectionGroup.TryGetValue(connectionID, out var documentID))
         {
             await Clients.Caller.SendAsync("SendOperationError", "User has no group.");
+
+            return;
         }
 
         int userID = int.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -172,6 +178,8 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
                 "User does not have needed privileges.", connectionID, documentID);
 
             await Clients.Caller.SendAsync("SendOperationError", "User does not have needed privileges");
+
+            return;
         }
 
         var document = documents[documentID];
