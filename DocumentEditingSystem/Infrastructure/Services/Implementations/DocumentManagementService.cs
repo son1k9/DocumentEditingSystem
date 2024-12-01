@@ -83,7 +83,10 @@ namespace API.Infrastructure.Services.Implementations
 
             if (document.OwnerId != userId)
             {
-                throw new ArgumentException("User does not have privileges to do this");
+                if (!document.Editors.Any(u => u.Id == userId))
+                {
+                    throw new ArgumentException("User does not have privileges to do this");
+                }
             }
 
             return DocumentMapper.DocumentToDto(document);
@@ -99,9 +102,12 @@ namespace API.Infrastructure.Services.Implementations
                 throw new ArgumentException("Document was not found");
             }
 
-            if (!document.Editors.Any(u => u.Id == userId))
+            if (document.OwnerId != userId)
             {
-                throw new ArgumentException("User does not have privileges to do this");
+                if (!document.Editors.Any(u => u.Id == userId))
+                {
+                    throw new ArgumentException("User does not have privileges to do this");
+                }
             }
 
             return DocumentMapper.DocumentContentToDto(document);

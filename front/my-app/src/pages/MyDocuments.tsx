@@ -4,7 +4,7 @@ import { Document } from '../models/Document';
 import { useAuth } from '../context/AuthContext';
 import { Operation, OperationType } from '../utils/OperationService';
 import diff_match_patch from 'diff-match-patch';
-import { getDocumentsForUser } from '../services/documentService';
+import { getDocumentsForUser, getDocumentById } from '../services/documentService';
 import useModal from '../hooks/useModal';
 import AddDocumentForm from '../forms/AddDocumentForm';
 import UpdateDocumentForm from '../forms/UpdateDocumentForm';
@@ -129,7 +129,7 @@ const MyDocuments: React.FC = () => {
     if (connection && activeDocumentId) {
       const joinDocument = async () => {
         try {
-          await connection.invoke('JoinDocument', activeDocumentId);
+          await connection.invoke('JoinDocument', activeDocumentId, currentVersion);
         } catch (err) {
           console.error('Error joining document group:', err);
         }
@@ -141,8 +141,24 @@ const MyDocuments: React.FC = () => {
 
   const handleDocumentSelect = (documentId: number) => {
     const selectedDocument = documents.find((doc) => doc.id === documentId);
-    setActiveDocumentId(documentId);
-    setDocumentContent(selectedDocument?.text || '');
+
+    const fetchDocument = async (documentId: number) => {
+      try{
+        if (user?.user.id){
+          const document = await getDocumentById(documentId);
+          setDocumentContent(document.text || '');
+          setCurrentVersion(document.version);
+          setActiveDocumentId(documentId);
+        }
+      }
+      catch (error)
+      {
+        console.error('Ошибка загрузки документов', error);
+      }
+    }
+
+    fetchDocument(documentId);
+
     console.log('Selected document:', documentId, selectedDocument);
   };
 

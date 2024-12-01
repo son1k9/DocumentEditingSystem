@@ -27,6 +27,7 @@ namespace API.Infrastructure.Repositories.Implementations
 			}
 			catch (Exception ex)
 			{
+                Console.WriteLine(ex.Message);
 				return false;
 			}
 		}
@@ -42,9 +43,8 @@ namespace API.Infrastructure.Repositories.Implementations
 
 		public async Task<bool> UpdateDocumentAsync(Document document)
 		{
-			_context.Documents.Update(document);
-
-			return await SaveAsync();
+            _context.Documents.Update(document);
+		    return await SaveAsync();
 		}
 		
 		public async Task<bool> DeleteDocumentAsync(Document document)

@@ -1,6 +1,15 @@
 import apiClient from './apiClient';
 import { Document } from '../models/Document';
 
+interface DocumentContent{
+  id : number,
+  documentName: string,
+  text : string,
+  version: number,
+  ownerId: number,
+  editors: string[]
+}
+
 export const getDocumentsForUser = async (): Promise<Document[]> => {
     try {
       const response = await apiClient.get(`/Documents/GetAvailableDocuments`);
@@ -10,6 +19,17 @@ export const getDocumentsForUser = async (): Promise<Document[]> => {
       throw new Error('Не удалось загрузить документы');
     }
   };
+
+export const getDocumentById = async (id: number): Promise<DocumentContent> => {
+    try {
+      const response = await apiClient.get(`/Documents/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при получении документов:', error);
+      throw new Error('Не удалось загрузить документы');
+    }
+  };
+
 
 export const addDocument = async (formData: FormData): Promise<void> => {
   try{

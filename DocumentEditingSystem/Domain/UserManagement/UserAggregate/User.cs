@@ -22,7 +22,7 @@ namespace Domain.UserManagement.UserAggregate
 		public Password Password { get; private set;  }
 		public RefreshToken? RefreshToken { get; private set; }
 
-        public IReadOnlyCollection<Document> Documents { get; private set; } = [];
+        public ICollection<Document> Documents { get; private set; } = [];
 
         public User(Name name, Username username, Email email, PhoneNumber phoneNumber, Password password)
 		{

@@ -163,7 +163,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
     {
         var connectionID = Context.ConnectionId;
 
-        if (connectionGroup.TryGetValue(connectionID, out var documentID))
+        if (!connectionGroup.TryGetValue(connectionID, out var documentID))
         {
             await Clients.Caller.SendAsync("SendOperationError", "User has no group.");
 

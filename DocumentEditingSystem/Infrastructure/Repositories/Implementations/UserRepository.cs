@@ -58,7 +58,7 @@ namespace API.Infrastructure.Repositories.Implementations
 
 		public bool CheckIfCanEdit(int userID, int documentID)
 		{
-			var query = _context.Documents.Where(d => d.Id == documentID && d.Editors.Any(u => u.Id == userID));
+			var query = _context.Documents.Where(d => d.Id == documentID && d.Editors.Any(u => u.Id == userID) || d.OwnerId == userID);
 			if (query.Any())
 			{
 				return true;

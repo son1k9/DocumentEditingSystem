@@ -89,7 +89,7 @@ namespace API.Controllers
 
 		}
 
-		[HttpGet("getDocument")]
+		[HttpGet("{documentId}")]
 		[Authorize]
 		public async Task<IResult> GetDocument(int documentId)
 		{
