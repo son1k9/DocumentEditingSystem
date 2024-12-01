@@ -1,4 +1,5 @@
-﻿using API.Domain.ValueObjects;
+﻿using API.Domain.DocumentManagement.DocumentAggregate;
+using API.Domain.ValueObjects;
 using API.Domain.ValueObjects.Enums;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -21,7 +22,9 @@ namespace Domain.UserManagement.UserAggregate
 		public Password Password { get; private set;  }
 		public RefreshToken? RefreshToken { get; private set; }
 
-		public User(Name name, Username username, Email email, PhoneNumber phoneNumber, Password password)
+        public IReadOnlyCollection<Document> Documents { get; private set; } = [];
+
+        public User(Name name, Username username, Email email, PhoneNumber phoneNumber, Password password)
 		{
 			if (name == null) throw new ArgumentNullException("Name cannot be null");
 			if (username == null) throw new ArgumentNullException("Username cannot be null");

@@ -12,6 +12,7 @@ namespace API.Infrastructure.Data
         public DbSet<Document> Documents { get; set; }
 		public DbSet<User> Users { get; set; }
 		public DbSet<Change> DocumentChanges {  get; set; }
+        public DbSet<DocumentContent> DocumentContents { get; set; }
 
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
@@ -25,9 +26,7 @@ namespace API.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new UserConfiguration());
             modelBuilder.ApplyConfiguration(new DocumentConfiguration());
             modelBuilder.ApplyConfiguration(new ChangeConfiguration());
-
-
+            modelBuilder.ApplyConfiguration(new DocumentContentConfiguration());
 		}
-
     }
 }

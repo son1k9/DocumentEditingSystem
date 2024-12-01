@@ -14,7 +14,7 @@ namespace API.Domain.Core.DocumentAggregate
         public int Version { get; private set; }
         public DateTime Date {  get; private set; }
 
-        public Change()
+        private Change()
         {
             
         }

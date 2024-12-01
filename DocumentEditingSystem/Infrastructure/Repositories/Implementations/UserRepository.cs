@@ -56,5 +56,14 @@ namespace API.Infrastructure.Repositories.Implementations
 			return await SaveAsync();
 		}
 
+		public bool CheckIfCanEdit(int userID, int documentID)
+		{
+			var query = _context.Documents.Where(d => d.Id == documentID && d.Editors.Any(u => u.Id == userID));
+			if (query.Any())
+			{
+				return true;
+			}
+			return false;
+		}
 	}
 }

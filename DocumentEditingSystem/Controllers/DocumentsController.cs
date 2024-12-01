@@ -89,13 +89,13 @@ namespace API.Controllers
 
 		}
 
-		[HttpPost("GetDocument")]
+		[HttpPost("getDocument")]
 		[Authorize]
 		public async Task<IResult> GetDocument(int documentId)
 		{
 			int userId = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
-			var document = await _documentManagementService.GetDocumentById(documentId, userId);
+			var document = await _documentManagementService.GetDocumentWithContentById(documentId, userId);
 
 			return Results.Ok(document);
 		}

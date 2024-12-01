@@ -9,5 +9,6 @@ namespace API.Infrastructure.Repositories.Interfaces
 		Task<bool> DeleteAsync(User user);
 		Task<User> GetByIdAsync(int id);
 		Task<User> GetByUsernameAsync(string username);
+		bool CheckIfCanEdit(int userID, int documentID);
 	}
 }

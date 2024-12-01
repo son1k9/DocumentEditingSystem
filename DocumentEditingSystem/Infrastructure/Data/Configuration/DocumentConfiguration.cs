@@ -16,9 +16,8 @@ namespace API.Infrastructure.Data.Configuration
 			builder.HasOne<User>().WithMany().HasForeignKey(p => p.OwnerId);
 
             builder.HasMany(p => p.Editors)
-				.WithMany()
+				.WithMany(u => u.Documents)
 				.UsingEntity(j => j.ToTable("DocumentEditors"));
-
 
             builder.OwnsOne(p => p.DocumentName, a =>
 			{
@@ -26,6 +25,9 @@ namespace API.Infrastructure.Data.Configuration
 				a.Property(u => u.Value).HasColumnType("varchar");
 				a.Property(u => u.Value).IsRequired();
 			});
+
+			builder.HasOne(d => d.Content).WithOne(c => c.Document)
+				.HasForeignKey<DocumentContent>(c => c.DocumentId).IsRequired();
 		}
 	}
 }

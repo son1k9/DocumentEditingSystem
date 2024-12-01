@@ -14,7 +14,11 @@ namespace API.Infrastructure.Data.Configuration
 
 			builder.HasKey(p => p.Id);
 
-			builder.OwnsOne(p => p.RefreshToken, a =>
+            builder.HasMany(p => p.Documents)
+				.WithMany(d => d.Editors)
+				.UsingEntity(j => j.ToTable("DocumentEditors"));
+
+            builder.OwnsOne(p => p.RefreshToken, a =>
 			{
 				a.Property(u => u.Value).HasColumnName("RefreshToken");
 				a.Property(u => u.Value).HasColumnType("varchar");
@@ -63,8 +67,6 @@ namespace API.Infrastructure.Data.Configuration
 				a.Property(u => u.Value).HasColumnType("varchar");
 				a.Property(u => u.Value).IsRequired();
 			});
-
-			
 		}
 	}
 }

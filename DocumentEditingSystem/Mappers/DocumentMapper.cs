@@ -20,7 +20,21 @@ namespace API.Mappers
 			{
 				Id = document.Id,
 				DocumentName = document.DocumentName.Value,
-				Text = document.Text,
+				OwnerId = document.OwnerId,
+				Editors = document.Editors.Select(x => x.Username.Value).ToList()
+			};
+
+			return documentR;
+		}
+
+		public static DocumentContentR DocumentContentToDto(Document document)
+		{
+			DocumentContentR documentR = new DocumentContentR
+			{
+				Id = document.Id,
+				DocumentName = document.DocumentName.Value,
+				Text = document.Content.Text,
+				Version = document.Version,
 				OwnerId = document.OwnerId,
 				Editors = document.Editors.Select(x => x.Username.Value).ToList()
 			};

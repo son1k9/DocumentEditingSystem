@@ -63,5 +63,10 @@ namespace API.Infrastructure.Repositories.Implementations
 		{
 			return await _context.Documents.Include(u => u.Editors).FirstOrDefaultAsync(x => x.Id == documentId);
 		}
+
+		public async Task<Document?> GetDocumentWithContentByIdAsync(int documentId)
+		{
+			return await _context.Documents.Include(u => u.Editors).Include(d => d.Content).FirstOrDefaultAsync(x => x.Id == documentId);
+		}
     }
 }

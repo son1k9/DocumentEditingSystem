@@ -12,6 +12,8 @@ namespace API.Infrastructure.Repositories.Interfaces
 		Task<bool> DeleteDocumentAsync(Document document);
 
 		Task<Document?> GetDocumentByIdAsync(int id);
+		
+		Task<Document?> GetDocumentWithContentByIdAsync(int id);
 
 		Task<List<Document>> GetAvailableDocumentsAsync(int userId);
 	}

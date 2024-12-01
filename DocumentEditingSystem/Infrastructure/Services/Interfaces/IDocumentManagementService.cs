@@ -11,12 +11,12 @@ namespace API.Infrastructure.Services.Interfaces
     public interface IDocumentManagementService
     {
         Task LoadDocument(IFormFile documentFile, int userId, Username username);
-        Task UpdateDocument(string text, int userId, int documentId);
         Task<List<DocumentR>> GetAvailableDocuments(int userId);
         Task<bool> UpdateDocumentEditors(int userId, int documentId, ICollection<string> usernames);
         Task<bool> DeleteDocumentFromEditor(int userId, int documentId);    
         Task DeleteDocument(int documentId, int userId);
         Task<DocumentR> GetDocumentById(int documentId, int userId);
+        Task<DocumentContentR> GetDocumentWithContentById(int documentId, int userId);
     }
 
 }

@@ -72,27 +72,9 @@ namespace API.Infrastructure.Services.Implementations
 
         }
 
-        public async Task UpdateDocument(string text, int userId, int documentId)
-        {
-            Document document = await _documentManagementRepository.GetDocumentByIdAsync(documentId);
-            if (document == null)
-            {
-                throw new ArgumentException("Document was not fount");
-            }
-
-            if (document.OwnerId != userId)
-            {
-                throw new ArgumentException("User does not have privileges to do this");
-            }
-
-            document.UpdateDocument(text);
-
-			await _documentManagementRepository.UpdateDocumentAsync(document);
-        }
-
         public async Task<DocumentR> GetDocumentById(int documentId, int userId)
         {
-            Document document = await _documentManagementRepository.GetDocumentByIdAsync(documentId);
+            Document? document = await _documentManagementRepository.GetDocumentByIdAsync(documentId);
             
             if (document == null)
             {
@@ -105,6 +87,24 @@ namespace API.Infrastructure.Services.Implementations
             }
 
             return DocumentMapper.DocumentToDto(document);
+        }
+
+
+        public async Task<DocumentContentR> GetDocumentWithContentById(int documentId, int userId)
+        {
+            Document? document = await _documentManagementRepository.GetDocumentWithContentByIdAsync(documentId);
+            
+            if (document == null)
+            {
+                throw new ArgumentException("Document was not found");
+            }
+
+            if (!document.Editors.Any(u => u.Id == userId))
+            {
+                throw new ArgumentException("User does not have privileges to do this");
+            }
+
+            return DocumentMapper.DocumentContentToDto(document);
         }
 
         public async Task<bool> UpdateDocumentEditors(int userId, int documentId, ICollection<string> usernames)

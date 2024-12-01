@@ -7,11 +7,13 @@ using OperationalTransformation;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
 
 namespace API.Hubs;
 
 [Authorize]
 public class DocumentsHub(ILogger<DocumentsHub> logger,
+                          IUserRepository usersRepository,
                           IDocumentManagementRepository documentsRepository,
                           IDocumentEditingRepository changesRepository) : Hub
 {
@@ -37,6 +39,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
     readonly static ConcurrentDictionary<string, int> connectionGroup = [];
     readonly static ConcurrentDictionary<int, DocumentData> documents = [];
 
+    readonly IUserRepository usersRepository = usersRepository;
     readonly IDocumentManagementRepository documentsRepository = documentsRepository;
     readonly IDocumentEditingRepository changesRepository = changesRepository;
     readonly IOperationsProvider operationsProvider = new OperationsProvider(changesRepository);
@@ -89,11 +92,27 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         await base.OnDisconnectedAsync(exception);
     }
 
-    public async Task JoinDocument(int documentID)
+    public async Task JoinDocument(int documentID, int clientVersion)
     {
         var connectionID = Context.ConnectionId;
 
-        // TODO: check privileges first and check if document exists in db
+        if (await documentsRepository.GetDocumentByIdAsync(documentID) == null)
+        {
+            logger.LogInformation("Failed to add connection {connectionID} to group {documentID}." +
+                "Document does not exist.", connectionID, documentID);
+
+            await Clients.Caller.SendAsync("JoinDocumentError", "Document does not exist");
+        }
+
+        int userID = int.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var canEdit = usersRepository.CheckIfCanEdit(userID, documentID);
+        if (!canEdit)
+        {
+            logger.LogInformation("Failed to add connection {connectionID} to group {documentID}." +
+                "User does not have needed privileges.", connectionID, documentID);
+
+            await Clients.Caller.SendAsync("JoinDocumentError", "User does not have needed privileges");
+        }
 
         var connectionAlreadyInGroup = !connectionGroup.TryAdd(connectionID, documentID);
         if (connectionAlreadyInGroup)
@@ -101,7 +120,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
             logger.LogInformation("Failed to add connection {connectionID} to group {documentID}." +
                 "Connection already in the group.", connectionID, documentID);
 
-            await Clients.Caller.SendAsync("JoinedDocumentError", "Already connected to a document");
+            await Clients.Caller.SendAsync("JoinDocumentError", "Already connected to a document");
 
             return;
         }
@@ -109,9 +128,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         var documentAlreadyExist = documents.ContainsKey(documentID);
         if (!documentAlreadyExist)
         {
-            var version = await changesRepository.GetLastVersionForDocument(documentID);
-            var documentAdded = documents.TryAdd(documentID, new DocumentData(new FairLock(), 0, new DocumentSynchronization(documentID, version)));
-            Debug.Assert(documentAdded);
+            await AddDocument(documentID);
         }
 
         var document = documents[documentID];
@@ -119,10 +136,16 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         await document.Lock.EnterAsync();
         try
         {
-            var operations = document.Document.Operations;
+            var (operationsFromDb, _) = operationsProvider.GetOperations(documentID, clientVersion);
+            var currentOperations = document.Document.Operations;
+            foreach (var op in currentOperations)
+            {
+                operationsFromDb.Add(op);
+            }
+
             var version = document.Document.DocumentVersion;
             await Groups.AddToGroupAsync(connectionID, documentID.ToString());
-            await Clients.Caller.SendAsync("JoinedDocument", operations, version, documentID);
+            await Clients.Caller.SendAsync("JoinedDocument", operationsFromDb, version, documentID);
         }
         finally
         {
@@ -136,9 +159,21 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
     {
         var connectionID = Context.ConnectionId;
 
-        // TODO: check privileges first
+        if (connectionGroup.TryGetValue(connectionID, out var documentID))
+        {
+            await Clients.Caller.SendAsync("SendOperationError", "User has no group.");
+        }
 
-        var documentID = connectionGroup[connectionID];
+        int userID = int.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var canEdit = usersRepository.CheckIfCanEdit(userID, documentID);
+        if (!canEdit)
+        {
+            logger.LogInformation("Failed to add connection {connectionID} to group {documentID}." +
+                "User does not have needed privileges.", connectionID, documentID);
+
+            await Clients.Caller.SendAsync("SendOperationError", "User does not have needed privileges");
+        }
+
         var document = documents[documentID];
         await document.Lock.EnterAsync();
         try
@@ -175,7 +210,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
             changes.Add(change);
         }
 
-        var document = await documentsRepository.GetDocumentByIdAsync(documentID);
+        var document = await documentsRepository.GetDocumentWithContentByIdAsync(documentID);
         if (document == null)
         {
             logger.LogInformation("Failed to save document with ID:{documentID}. Document does not exist.", documentID);
@@ -184,11 +219,19 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
 
         await changesRepository.AddChangesAsync(changes);
 
-        var newText = DocumentSynchronization.UpdateDocument(document.Text, documentSynchronization.Operations);
+        var newText = DocumentSynchronization.UpdateDocument(document.Content.Text, documentSynchronization.Operations);
         
-        document.UpdateDocument(newText);
+        var version = documentSynchronization.DocumentVersion;
+        document.UpdateDocument(newText, version);
         await documentsRepository.UpdateDocumentAsync(document);
 
         documentSynchronization.Clear();
+    }
+
+    private async Task AddDocument(int documentID)
+    {
+        var version = await changesRepository.GetLastVersionForDocument(documentID);
+        var documentAdded = documents.TryAdd(documentID, new DocumentData(new FairLock(), 0, new DocumentSynchronization(documentID, version)));
+        Debug.Assert(documentAdded);
     }
 }
