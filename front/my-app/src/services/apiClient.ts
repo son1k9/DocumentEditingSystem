@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useAuth } from '../context/AuthContext';
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:5019/api',
@@ -56,6 +57,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         console.error('Не удалось обновить токен:', refreshError);
+        const { logout } = useAuth();
+        logout();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
