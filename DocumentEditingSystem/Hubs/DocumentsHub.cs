@@ -3,6 +3,7 @@ using API.Domain.ValueObjects.Enums;
 using API.Infrastructure.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using OperationalTransformation;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -32,7 +33,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         public void DecrementCount()
         {
             Interlocked.Decrement(ref _connectionCount);
-            Debug.Assert(ConnectionsCount > 0);
+            Debug.Assert(ConnectionsCount >= 0);
         }
     }
 
@@ -79,7 +80,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
                     document.Lock.Exit();
                 }
 
-                logger.LogInformation("No connection left in group {documentID}. Group was removed", documentID);
+                logger.LogInformation("No connection left in group {documentID}. Document was saved, group was removed", documentID);
             }
         }
 
@@ -101,7 +102,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
             logger.LogInformation("Failed to add connection {connectionID} to group {documentID}." +
                 "Document does not exist.", connectionID, documentID);
 
-            await Clients.Caller.SendAsync("JoinDocumentError", "Document does not exist");
+            await Clients.Caller.SendAsync("JoinDocumentError", "Document does not exist", documentID);
 
             return;
         }
@@ -113,7 +114,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
             logger.LogInformation("Failed to add connection {connectionID} to group {documentID}." +
                 "User does not have needed privileges.", connectionID, documentID);
 
-            await Clients.Caller.SendAsync("JoinDocumentError", "User does not have needed privileges");
+            await Clients.Caller.SendAsync("JoinDocumentError", "User does not have needed privileges", documentID);
 
             return;
         }
@@ -124,7 +125,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
             logger.LogInformation("Failed to add connection {connectionID} to group {documentID}." +
                 "Connection already in the group.", connectionID, documentID);
 
-            await Clients.Caller.SendAsync("JoinDocumentError", "Already connected to a document");
+            await Clients.Caller.SendAsync("JoinDocumentError", "Already connected to a document", documentID);
 
             return;
         }
@@ -132,7 +133,8 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         var documentAlreadyExist = documents.ContainsKey(documentID);
         if (!documentAlreadyExist)
         {
-            await AddDocument(documentID);
+            var version = await changesRepository.GetLastVersionForDocument(documentID);
+            var documentAdded = documents.TryAdd(documentID, new DocumentData(new FairLock(), 0, new DocumentSynchronization(documentID, version)));
         }
 
         var document = documents[documentID];
@@ -163,6 +165,9 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
     {
         var connectionID = Context.ConnectionId;
 
+        logger.LogInformation("Got operation from connection: {connectionID}, version:{version}, " +
+            "operation: (Pos: {pos}, Text: {text})", version, connectionID, op.Pos, op.Text);
+
         if (!connectionGroup.TryGetValue(connectionID, out var documentID))
         {
             await Clients.Caller.SendAsync("SendOperationError", "User has no group.");
@@ -187,6 +192,7 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         try
         {
             var (opToSend, nextVersion) = document.Document.AddOperation(op, version, operationsProvider);
+            logger.LogInformation("Send operation: (Pos: {pos}, Text: {text}). With version: {version}", opToSend.Pos, opToSend.Text, nextVersion);
             await Clients.Caller.SendAsync("ReceivedAcknowledge", nextVersion);
             await Clients.OthersInGroup(documentID.ToString()).SendAsync("ReceivedOperation", opToSend, nextVersion);
         }
@@ -234,12 +240,5 @@ public class DocumentsHub(ILogger<DocumentsHub> logger,
         await documentsRepository.UpdateDocumentAsync(document);
 
         documentSynchronization.Clear();
-    }
-
-    private async Task AddDocument(int documentID)
-    {
-        var version = await changesRepository.GetLastVersionForDocument(documentID);
-        var documentAdded = documents.TryAdd(documentID, new DocumentData(new FairLock(), 0, new DocumentSynchronization(documentID, version)));
-        Debug.Assert(documentAdded);
     }
 }

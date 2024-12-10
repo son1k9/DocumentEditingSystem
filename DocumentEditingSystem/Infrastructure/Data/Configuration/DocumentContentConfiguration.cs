@@ -11,6 +11,6 @@ public class DocumentContentConfiguration : IEntityTypeConfiguration<DocumentCon
     {
         builder.ToTable("DocumentContents");
 
-        builder.HasKey(x => x.Id);
+        builder.HasKey(x => x.DocumentId);
     }
 }

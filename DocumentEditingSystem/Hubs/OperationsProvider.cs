@@ -10,7 +10,7 @@ public class OperationsProvider(IDocumentEditingRepository changesRepository) : 
 
     public (List<Operation>, int) GetOperations(int documentID, int verstionStartFrom)
     {
-        var changes = changesRepository.GetChangesByDocument(documentID, verstionStartFrom);
+        var changes = changesRepository.GetChangesByDocumentStartFromVersion(documentID, verstionStartFrom);
 
         if (changes.Count == 0)
         {

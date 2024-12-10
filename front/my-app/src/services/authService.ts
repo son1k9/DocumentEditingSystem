@@ -22,7 +22,7 @@ export const login = async (data: LoginInput): Promise<LoginResponse> => {
         const { access_token, refresh_token, username } = response.data;
 
         Cookies.set('token', access_token);
-        Cookies.set('refreshToken', refresh_token);
+        Cookies.set('refresh_token', refresh_token);
 
         const userResponse = await apiClient.post("/users/userdata");
 

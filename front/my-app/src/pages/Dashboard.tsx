@@ -34,32 +34,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-4 flex gap-4 h-full">
-
-      <aside className="w-1/4 bg-white p-4 shadow-md rounded">
-        <h1 className="text-3xl font-bold mb-6">Личный кабинет</h1>
-
-        <nav>
-          <ul>
-            <li className="mb-4">
-              <Link to="/account/dashboard" className="text-blue-500 hover:underline">
-                Личные данные
-              </Link>
-            </li>
-            <li>
-              <Link to="/account/documents" className="text-blue-500 hover:underline">
-                Мои документы
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </aside>
-
       <section className="flex-1 bg-white p-6 shadow-md rounded">
-        <Routes>
-          <Route path="/dashboard" element={<DashboardInfo user={user} />} />
-          <Route path="/documents" element={<DashboardDocuments documents={documents} />} />
-          <Route path="/" element={<Navigate to="/account/dashboard" replace />} />
-        </Routes>
+        <DashboardInfo user={user} />
       </section>
     </div>
   );

@@ -1,7 +1,7 @@
 import apiClient from './apiClient';
 import { Document } from '../models/Document';
 
-interface DocumentContent{
+export interface DocumentContent{
   id : number,
   documentName: string,
   text : string,

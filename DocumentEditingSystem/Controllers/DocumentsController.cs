@@ -48,23 +48,6 @@ namespace API.Controllers
 
 		}
 
-		// [HttpPost("UpdateDocument")]
-		// [Authorize]
-		// public async Task<IResult> UpdateDocument(IFormFile file, int documentId)
-		// {
-		// 	if (file.ContentType != "text/plain")
-		// 	{
-		// 		return Results.BadRequest("File type is incorrect");
-		// 	}
-
-		// 	int userId = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-
-		// 	DocumentR document = await _documentManagementService.UpdateDocument(file, userId, documentId);
-
-		// 	return Results.Ok(document);
-
-		// }
-
 		[HttpGet("GetAvailableDocuments")]
 		[Authorize]
 		public async Task<IResult> GetAvailableDocuments()

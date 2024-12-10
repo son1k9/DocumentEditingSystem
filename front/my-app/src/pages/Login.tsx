@@ -12,7 +12,7 @@ const Login: React.FC = () => {
   const onSubmit = async (data: LoginInput) => {
     try {
       await login(data);
-      navigate('/dashboard');
+      navigate('/documents');
     } catch (error: any) {
       alert(error.response?.data?.message || 'Ошибка при входе');
     }

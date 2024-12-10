@@ -44,7 +44,7 @@ namespace API.Infrastructure.Services.Implementations
 				issuer: AuthOptions.ISSUER,
 				audience: AuthOptions.AUDIENCE,
 				claims: claimsIdentity.Claims,
-				expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(5)),
+				expires: DateTime.UtcNow.Add(TimeSpan.FromDays(3)),
 				signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
             var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
 

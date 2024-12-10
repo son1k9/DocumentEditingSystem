@@ -6,7 +6,9 @@
 		public string DocumentName { get; set; }
 		public int OwnerId { get; set; }
 		public List<string> Editors { get; set; }
-	}
+        public DateTime CreationDate { get; set; }
+        public DateTime ChangingDate { get; set; }
+    }
 
 	public class DocumentContentR
 	{

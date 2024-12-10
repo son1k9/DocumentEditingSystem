@@ -10,7 +10,9 @@ import Dashboard from './pages/Dashboard';
 import { AuthProvider } from './context/AuthContext';
 
 import './styles/global.css';
-import MyDocuments from './pages/MyDocuments';
+import DocumentsPage from './pages/DocumentsPage';
+import DocumentPage from './pages/DocumentPage';
+import DocumentPageView from './pages/DocumentPageView';
 
 const App: React.FC = () => {
   return (
@@ -24,7 +26,9 @@ const App: React.FC = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route element={<PrivateRoute />}>
-              <Route path='/documents' element={<MyDocuments />} />
+              <Route path='/documents' element={<DocumentsPage />} />
+              <Route path='/documents/:slug' element={<DocumentPage />} />
+              <Route path='/documents/:slug/view' element={<DocumentPageView />} />
               <Route path="/account/*" element={<Dashboard />} />
               </Route>
             </Routes>
