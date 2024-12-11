@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { login as loginService, register as registerService, logout as logoutService, isAuthenticated as checkAuthenticated, getCurrentUser, LoginResponse } from '../services/authService';
+import { login as loginService, register as registerService, logout as logoutService, isAuthenticated as checkAuthenticated, getCurrentUser} from '../services/authService';
 import { LoginInput, RegisterInput } from '../models/authModels'; 
 import { User } from '../models/User';
 
@@ -24,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (checkAuthenticated()) {
         try {
           const currentUser = await getCurrentUser();
+          // @ts-ignore
           setUser(currentUser);
           setIsAuthenticated(true);
         } catch (error: any) {
@@ -40,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await loginService(data);
       const currentUser = await getCurrentUser();
+      // @ts-ignore
       setUser(currentUser);
       setIsAuthenticated(true);
       setError(null);

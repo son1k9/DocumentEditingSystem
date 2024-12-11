@@ -42,23 +42,24 @@ const UpdateDocumentForm: React.FC<UpdateDocumentFormProps> = ({
   };
 
   return (
-    <div className="p-4 bg-white rounded shadow-lg">
+    <div className="p-4 bg-white rounded">
       <h2 className="text-xl font-bold mb-4">Управление документом</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
-      <label>Редакторы (Username через запятую):</label>
-      <input className='w-[90%]'
+      <label>Редакторы (Имена пользователей через запятую):</label>
+      <input className='w-[90%] w-full p-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300`}'
         {...register('editors')}
-        placeholder="Введите ID редакторов через запятую"
+        placeholder="Введите редакторов через запятую"
         defaultValue={editors.join(',')}
       />
       <br></br>
-      <button type="submit">Обновить</button>
       <br></br>
-      <button type="button" onClick={closeModal}>
+      <button type="submit" className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">Обновить</button>
+      <br></br>
+      <button type="button" onClick={closeModal} className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
         Отмена
       </button>
       <br></br>
-      <button type="button" onClick={handleDelete}>
+      <button type="button" onClick={handleDelete} className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
         Удалить документ
       </button>
     </form>

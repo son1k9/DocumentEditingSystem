@@ -8,11 +8,11 @@ interface AddDocumentProps{
 }
 
 const AddDocumentForm: React.FC<AddDocumentProps> = ({closeModal, refreshDocuments}) => {
-    const { register, handleSubmit } = useForm();
+    const { handleSubmit } = useForm();
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const onSubmit = async (data : any) => {
+    const onSubmit = async (_ : any) => {
         setIsSubmitting(true);
         const formData = new FormData();
 

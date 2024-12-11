@@ -19,7 +19,7 @@ export interface LoginResponse {
 export const login = async (data: LoginInput): Promise<LoginResponse> => {
     try {
         const response = await apiClient.post(`/users/authorize?username=${data.username}&password=${data.password}`);
-        const { access_token, refresh_token, username } = response.data;
+        const { access_token, refresh_token} = response.data;
 
         Cookies.set('token', access_token);
         Cookies.set('refresh_token', refresh_token);
@@ -73,7 +73,7 @@ export const getCurrentUser = async () => {
         if (userj)
         {
             const user = JSON.parse(userj);
-
+            
             return {
                 token,
                 refreshToken,
