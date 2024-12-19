@@ -51,19 +51,6 @@ const Register: React.FC = () => {
           </div>
 
           <div className="mb-4">
-            <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-700">
-              Имя пользователя
-            </label>
-            <input
-              type="text"
-              id="username"
-              {...register('username', { required: 'Это поле обязательно для заполнения' })}
-              className={`w-full p-2 border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:ring-blue-300`}
-            />
-            {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
-          </div>
-
-          <div className="mb-4">
             <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700">
               Электронная почта
             </label>
@@ -87,6 +74,19 @@ const Register: React.FC = () => {
               className={`w-full p-2 border ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:ring-blue-300`}
             />
             {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>}
+          </div>
+
+		  <div className="mb-4">
+            <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-700">
+              Логин
+            </label>
+            <input
+              type="text"
+              id="username"
+              {...register('username', { required: 'Это поле обязательно для заполнения' })}
+              className={`w-full p-2 border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:ring-blue-300`}
+            />
+            {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
           </div>
 
           <div className="mb-4">

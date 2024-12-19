@@ -56,7 +56,7 @@ const AddDocumentForm: React.FC<AddDocumentProps> = ({closeModal, refreshDocumen
             </div>
             <div className="flex justify-end">
                 <button type="submit" className="btn bg-blue-500 p-2 rounded-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Add Document'}
+                {isSubmitting ? 'Submitting...' : 'Добавить документ'}
                 </button>
             </div>
             </form>

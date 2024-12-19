@@ -45,7 +45,7 @@ const UpdateDocumentForm: React.FC<UpdateDocumentFormProps> = ({
     <div className="p-4 bg-white rounded">
       <h2 className="text-xl font-bold mb-4">Управление документом</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
-      <label>Редакторы (Имена пользователей через запятую):</label>
+      <label>Редакторы (Логин пользователей через запятую):</label>
       <input className='w-[90%] w-full p-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300`}'
         {...register('editors')}
         placeholder="Введите редакторов через запятую"

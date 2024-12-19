@@ -26,7 +26,7 @@ const Login: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-4">
             <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-700">
-              Имя пользователя
+              Логин
             </label>
             <input
               type="text"

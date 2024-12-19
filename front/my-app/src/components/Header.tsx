@@ -38,7 +38,7 @@ const Header: React.FC = () => {
           ) : (
             <li>
               <Link to="/login" className="hover:text-gray-200">
-                Логин
+                Вход
               </Link>
             </li>
           )}
